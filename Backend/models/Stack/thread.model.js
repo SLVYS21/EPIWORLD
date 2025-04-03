@@ -32,6 +32,10 @@ const threadSchema = new mongoose.Schema({
     validated: {
         type: Boolean,
         default: true
+    },
+    community: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Community"
     }
 });
 

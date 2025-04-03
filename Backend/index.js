@@ -61,6 +61,8 @@ app.use(express.json());
 
 // app.use("/api");
 
+app.use("/api/", require('./routes/test.route'));
+
 app.use("/api/lost", require('./routes/Lost/lost.route'));
 
 app.use("/api/user", require('./routes/user.route'));

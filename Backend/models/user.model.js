@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    birthdate: {
+        type: Date,
+        default: Date.now,
+        required: true,
+    },
     legend: {
         type: String,
         default: "Just a chill Guy"

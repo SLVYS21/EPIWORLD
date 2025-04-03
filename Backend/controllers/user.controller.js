@@ -9,9 +9,9 @@ const generateToken = (id) => {
 const userController = ({
     signup: async(req, res) => {
         try {
-            const {name, email, password, genre, profil} = req.body;
+            const {name, email, password, genre, profil, birthdate} = req.body;
 
-            if (!name || !email || !password || !genre || !["M", "F"].includes(genre))
+            if (!name || !email || !password || !genre || !["M", "F"].includes(genre) || !birthdate)
                 return res.status(404).json({
                     message: "Please fill the the required fields"
                 });
@@ -26,7 +26,8 @@ const userController = ({
                 email,
                 genre,
                 profil,
-                password: bcrypt.hash(password, 10)
+                password: bcrypt.hash(password, 10),
+                birthdate: new Date(birthdate)
             });
             const users = await User.find();
             if (users.length === 1)

@@ -66,6 +66,10 @@ const postSchema = new mongoose.Schema({
     threadId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Thread"
+    },
+    communtiy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Community"
     }
 })
 
