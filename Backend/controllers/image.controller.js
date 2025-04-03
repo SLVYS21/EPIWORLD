@@ -72,9 +72,7 @@ const deleteImg = async(imageName) => {
         };
         const command = new GetObjectCommand(params);
         const response = await s3.send(command);
-        return {
-            deleted: (response) ? true : false
-        }
+        return (response) ? true : false;
     } catch (error) {
         return null;
     }
@@ -83,5 +81,5 @@ const deleteImg = async(imageName) => {
 module.exports = {
     upload: uploadImg,
     get: getImgUrl,
-    delete: deleteImg
+    deleteImg
 }

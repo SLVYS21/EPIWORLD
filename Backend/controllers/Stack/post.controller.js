@@ -2,12 +2,37 @@ const { nblikes } = require('../../models/Stack/comment.model');
 const Post = require('../../models/Stack/post.model');
 const User = require('../../models/user.model')
 const Comment = require('../../models/Stack/comment.model')
+const {upload, get, deleteImg} = require('../image.controller');
 
 const controller = ({
     create: async(req, res) => {
         try {
-            const {title, body, type, flags, files, threadId} = req.query;
+            const {title, body, type, flags, threadId} = req.query;
 
+            const files = req.files;
+            if (files) {
+                if (files.length > 4) {
+                    return res.status(404).json({
+                        message: "Files are limit to 4 as length"
+                    });
+                }
+                const imgs = [];                
+                for (const image of files) {
+                    const ret = await upload(image);
+                    if (ret) {
+                        imgs.push({
+                            name: ret.name,
+                            url: ret.url,
+                            updated_at: new Date()
+                        });
+                        continue;
+                    }
+                    return res.status(410).json({
+                        message: "Invalid Image"
+                    })
+                }
+    
+            }
             if (!type || !body || !["Info", "Problem"].includes(type) || !title) {
                 return res.status(404).json({
                     message: "Type and some body are required"       
@@ -17,10 +42,88 @@ const controller = ({
                 body,
                 type,
                 flags,
-                files,
+                files: imgs,
                 title
             })
             return res.status(200).json(post);
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            })
+        }
+    },
+    addFile: async(req, res) => {
+        try {
+            const post = await Post.findById(req.params.id);
+            if (!post)
+                return res.status(404).json({
+                    message: "Object post not found"
+                });
+            if (post.poster.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: "You are not authorized to update this object." });
+            }
+            if (post.files.length >= 4) {
+                return res.status(404).json({
+                    message: "Image limits length reached"
+                });
+            }
+            if (!req.file) {
+                return res.status(404).json({
+                    message: "Please set a valid image"
+                })
+            }
+            const file = await upload(req.file);
+            if (!file) {
+                return res.status(404).json({
+                    message: "Invalid Image"
+                });
+            }
+            post.files.push({
+                name: file.name,
+                url: file.url,
+                created_at: new Date()
+            })
+            await post.save();
+            return res.status(200).json({
+                message: "Image successfully added"
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            })
+        }
+    },
+    deleteFile: async(req, res) => {
+        try {
+            const file = req.body.file;
+
+            if (!file) {
+                return res.status(404).json({
+                    message: "What do you want to really delete boy ?"
+                });
+            }
+            const post = await Post.findById(req.params.id);
+            if (!post)
+                return res.status(404).json({
+                    message: "Object Post not found"
+                });
+            if (post.poster.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: "You are not authorized to update this object." });
+            }
+            for (const img of post.files) {
+                if (img.name === file.name) {
+                    await deleteImg(img.name);
+                    post.files.filter(it => it.name === file.name);
+                    await post.save();
+                    return res.status(200).json({
+                        message: "Deleting done"
+                    });
+                }
+            }
+            return res.status(404).json({
+                message: "Image not found"
+            });
+
         } catch (error) {
             return res.status(500).json({
                 message: error.message
@@ -128,6 +231,9 @@ const controller = ({
                     message: "You can't delete this post"
                 });
             }
+            for (const img of post.files) {
+                await deleteImg(img.name);
+            }
             const comments = await Comment.find({poster: post.poster});
             for (const comment of comments) {
                 const subs = await Comment.find({parent: comment._id});
@@ -181,9 +287,9 @@ const controller = ({
     },
     commentPost: async(req, res) => {
         try {
-            const {postId, body, flags, lostId} = req.body;
+            const {postId, body, flags} = req.body;
 
-            if ((!lostId && !postId) || !body)
+            if ((!postId) || !body)
                 return res.status(404).json({
                     message: "Please set all the essentials"
                 });
@@ -192,6 +298,11 @@ const controller = ({
                 return res.status(404).json({
                     message: "Post not found"
                 });
+            if (!post.comment) {
+                return res.status(403).json({
+                    message: "Comment are not allowed"
+                })
+            }
             if (body.trim() === '' || !body.trim())
                 return res.status(404).json({
                     message: "Body cannot be empty"
@@ -199,7 +310,8 @@ const controller = ({
             const comment = await Comment.create({
                 poster: req.user._id,
                 body,
-                flags
+                flags,
+                post: post._id
             });
             return res.status(200).json(comment);
         } catch (error) {

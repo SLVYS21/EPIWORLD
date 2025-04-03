@@ -19,7 +19,18 @@ const postSchema = new mongoose.Schema({
         required: true
     },
     files: [{
-        type: String
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
     }],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -67,9 +78,13 @@ const postSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Thread"
     },
-    communtiy: {
+    community: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Community"
+    },
+    comment: {
+        type: Boolean,
+        default: true
     }
 })
 

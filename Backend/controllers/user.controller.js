@@ -1,6 +1,8 @@
 const User = require('../models/user.model')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
+const {upload, get, deleteImg} = require('./image.controller')
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -9,7 +11,7 @@ const generateToken = (id) => {
 const userController = ({
     signup: async(req, res) => {
         try {
-            const {name, email, password, genre, profil, birthdate} = req.body;
+            const {name, email, password, genre, birthdate} = req.body;
 
             if (!name || !email || !password || !genre || !["M", "F"].includes(genre) || !birthdate)
                 return res.status(404).json({
@@ -20,14 +22,22 @@ const userController = ({
                 return ree.status(403).json({
                     message: "Already exist. Let login"
                 });
-            
+            let profile = {};
+            if (req.profile) {
+                const ret = upload(req.profile);
+                profile = {
+                    name: ret.name,
+                    url: name.url,
+                    updated_at: new Date()
+                }
+            }
             const user = await User.create({
                 name,
                 email,
                 genre,
-                profil,
                 password: bcrypt.hash(password, 10),
-                birthdate: new Date(birthdate)
+                birthdate: new Date(birthdate),
+                profile
             });
             const users = await User.find();
             if (users.length === 1)
@@ -154,7 +164,33 @@ const userController = ({
     },
     updateProfile: async(req, res) => {
         try {
-
+            const user = await User.findById(req.user._id);
+            if (!user) {
+                return res.status(404).json({
+                    message: "Who are you guy"
+                });
+            }
+            if (!req.profile) {
+                return res.status(404).json({
+                    message: "Set Valid Image"
+                })
+            };
+            if (user.profile)
+                await deleteImg(user.profile.name);
+            const profile = upload(req.profile);
+            if (!profile)
+                return res.status(405).json({
+                    message: "Invalid Profile"
+                });
+            user.profile = {
+                name: profile.name,
+                url: profile.url,
+                updated_at: new Date()
+            }
+            await user.save();
+            return res.status(200).json({
+                profile: user.profile
+            });
         } catch (error) {
             return res.status(500).json({
                 message: error.message
@@ -184,6 +220,32 @@ const userController = ({
             const {page = 1, limit = 25, status} = req.query;
 
             const query = {}
+            if (status)
+                query.status = {};
+            const users = await User.find(query)
+            .select("-password")
+            .sort({_id: -1})
+            .skip((page - 1) * limit)
+            .limit(limit)
+            return res.status(200).json(users);
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            })
+        }
+    },
+    getByPromotion: async(req, res) => {
+        try {
+            const {page = 1, limit = 25, status, tek} = req.query;
+
+            if (!tek || !["Tek 1", "Tek 2", "Tek 3", "Coding", "Msc Pro 1", "Msc Pro 2", "Pedago", "Cantine", "Bocal"].includes(tek)) {
+                return res.status(404).json({
+                    message: "What do you want bruh"
+                });
+            }
+            const query = {
+                tek: tek
+            }
             if (status)
                 query.status = {};
             const users = await User.find(query)

@@ -24,10 +24,22 @@ const menuSchema = new mongoose.Schema({
         required: false
     },
     images: [{
-        type: String
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
     }],
     mainpic: {
-        type: String
+        type: Number,
+        default: 0
     },
     minPrice: {
         value: {

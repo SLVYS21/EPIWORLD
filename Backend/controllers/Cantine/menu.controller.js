@@ -124,28 +124,55 @@ const menuController = ({
                     currency: "XOF"
                 }
             */
-            const {name, description, images, mainpic, category, price} = req.body;
-
+            const {name, description, mainpic, category, price} = req.body;
+            const images = req.images;
+            if (!images) {
+                return res.status(404).json({
+                    message: "Images are required"
+                });
+            }
+            if (images.length > 4) {
+                return res.status(404).json({
+                    message: "Limit of 4 images"
+                });
+            }
             const exist = await Menu.findOne({
                 name: {$regex: new RegExp(`^${name.trim()}$`, 'i')}
             });
+            const imgs = [];
+
+            for (const image of images) {
+                const ret = await upload(image);
+                if (ret) {
+                    imgs.push({
+                        name: ret.name,
+                        url: ret.url,
+                        updated_at: new Date()
+                    });
+                    continue;
+                }
+                return res.status(410).json({
+                    message: "Invalid Image"
+                })
+            }
+
             if (!exist)
                 return res.status(404).json({
                     message: "Menu already exist"
                 });
             const menu = await Menu.findOneAndUpdate({
-                name
-            }, {
-                description,
-                images,
-                mainpic,
-                category,
-                price,
-                minPrice: price,
-                maxPrice: price
-            }, {
-                new: true,
-                insert: true
+                    name
+                }, 
+                {
+                    description,
+                    images: imgs,
+                    category,
+                    price,
+                    minPrice: price,
+                    maxPrice: price
+                }, {
+                    new: true,
+                    insert: true
             });
 
             return res.status(200).json(
@@ -161,6 +188,16 @@ const menuController = ({
         try {
             const {menuId, name, price, mainpic, images, defaultStock} = req.body;
 
+            if (!images) {
+                return res.status(404).json({
+                    message: "Images are required"
+                });
+            }
+            if (images.length > 4) {
+                return res.status(404).json({
+                    message: "Limit of 4 images"
+                });
+            }
             const menu = await Menu.findById(menuId).populate("variants");
             if (!menu) {
                 return res.status(404).json({
@@ -177,6 +214,23 @@ const menuController = ({
                 return res.status(403).json({
                     message: "Price can't be negative"
                 });
+            const imgs = [];
+
+            for (const image of images) {
+                const ret = await upload(image);
+                if (ret) {
+                    imgs.push({
+                        name: ret.name,
+                        url: ret.url,
+                        updated_at: new Date()
+                    });
+                    continue;
+                }
+                return res.status(410).json({
+                    message: "Invalid Image"
+                })
+            }
+
             const variant = await Variant.create({
                 name,
                 price: {
@@ -184,7 +238,7 @@ const menuController = ({
                     currency: "XOF"
                 },
                 mainpic,
-                images,
+                images: imgs,
                 quant: menu.quant,
                 menu: menu._id,
                 defaultStock,
@@ -218,7 +272,7 @@ const menuController = ({
     updateVariant: async(req, res) => {
         try {
             const variantId = req.params.id;
-            const {name, price, defaultStock, quant, images, mainpic} = req.body;
+            const {name, price, defaultStock, quant, mainpic} = req.body;
             const variant = await Variant.findById(variantId);
             if (!variant)
                 return res.status(404).json({
@@ -275,7 +329,7 @@ const menuController = ({
     },
     updateMenu: async(req, res) => {
         try {
-            const {name, description, price, mainpic, images, quant, defaultStock} = req.body;
+            const {name, description, price, quant, defaultStock} = req.body;
 
             const menu = await Menu.findById(req.params.id);
 
@@ -300,8 +354,6 @@ const menuController = ({
             }
             if (mainpic)
                 menu.mainpic = mainpic;
-            if (images)
-                menu.images = images;
             if (defaultStock) {
                 if (menu.variants !== null) {
                     menu.defaultStock = defaultStock;
@@ -338,7 +390,17 @@ const menuController = ({
                 return res.status(404).json({
                     message: "Variant not found"
                 });
-            
+            const menu = await Menu.findById(variant.menu);
+            if (!menu) {
+                return res.status(404).json({
+                    message: "Variant without menu ! or Menu without variant ! I don't knowww !"
+                });
+            }
+            menu.variants.filter(it => it._id.toString() === variant._id.toString());
+            for (const image of variant.images) {
+                await deleteImg(image.name);
+            }
+            await menu.save();
             return res.status(200).json("Deletion done");
         } catch (error) {
             return res.status(500).json({

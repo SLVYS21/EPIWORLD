@@ -31,7 +31,18 @@ const variantSchema = new mongoose.Schema({
         type: String,
     },
     images: [{
-        type: String,
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
     }],
     menu: {
         type: mongoose.Schema.Types.ObjectId,

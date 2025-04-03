@@ -1,21 +1,50 @@
 const User = require('../../models/user.model');
 const Lost = require('../../models/Lost/lost.model');
 const Comment = require('../../models/Stack/comment.model')
+const {upload, get, deleteImg} = require('../image.controller')
 
 const controller = ({
     create: async(req, res) => {
         try {
-            const {position, images, status} = req.body;
+            const {name, position, status} = req.body;
+            const images = req.images;
 
+            if (!images) {
+                return res.status(404).json({
+                    message: "Images are required"
+                });
+            }
+            if (images.length > 4) {
+                return res.status(404).json({
+                    message: "Limit of 4 images"
+                });
+            }
             console.log("Trying creation");
-            if (!position || !images || !["Finder", "Loser"].includes(status)) {
+            if (!position || !["Finder", "Loser"].includes(status) || !name) {
                 return res.status(404).json({
                     message: "Please fill all the fields"
                 });
             }
+            const imgs = [];
+
+            for (const image of images) {
+                const ret = await upload(image);
+                if (ret) {
+                    imgs.push({
+                        name: ret.name,
+                        url: ret.url,
+                        updated_at: new Date()
+                    });
+                    continue;
+                }
+                return res.status(410).json({
+                    message: "Invalid Image"
+                })
+            }
             const lost = await Lost.create({
+                name,
                 position,
-                images,
+                images: imgs,
                 finder: (status === "Finder") ? req.user._id : null,
                 loser: (status === "loser") ? req.user._id : null
             });
@@ -26,9 +55,121 @@ const controller = ({
             })
         }
     },
+    commentLost: async(req, res) => {
+        try {
+            const {lostId, body, flags} = req.body;
+
+            if ((!lostId) || !body)
+                return res.status(404).json({
+                    message: "Please set all the essentials"
+                });
+            const lost = await Post.findById(lostId);
+            if (!lost)
+                return res.status(404).json({
+                    message: "Post not found"
+                });
+            if (!lost.comment) {
+                return res.status(403).json({
+                    message: "Comment are not allowed"
+                })
+            }
+            if (body.trim() === '' || !body.trim())
+                return res.status(404).json({
+                    message: "Body cannot be empty"
+                });
+            const comment = await Comment.create({
+                poster: req.user._id,
+                body,
+                flags,
+                lost: lost._id
+            });
+            return res.status(200).json(comment);
+        } catch (error) {
+            return res.status(500).jsons({
+                message: error.message
+            })
+        }
+    },
+    addImage: async(req, res) => {
+        try {
+            const lost = await Lost.findById(req.params.id);
+            if (!lost)
+                return res.status(404).json({
+                    message: "Object Lost not found"
+                });
+            if (lost.finder?.toString() !== req.user._id.toString() && lost.loser?.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: "You are not authorized to update this object." });
+            }
+            if (lost.images.length >= 4) {
+                return res.status(404).json({
+                    message: "Image limits length reached"
+                });
+            }
+            if (!req.image) {
+                return res.status(404).json({
+                    message: "Please set a valid image"
+                })
+            }
+            const image = await upload(req.image);
+            if (!image) {
+                return res.status(404).json({
+                    message: "Invalid Image"
+                });
+            }
+            lost.images.push({
+                name: image.name,
+                url: image.url,
+                created_at: new Date()
+            })
+            await lost.save();
+            return res.status(200).json({
+                message: "Image successfully added"
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            })
+        }
+    },
+    deleteImage: async(req, res) => {
+        try {
+            const image = req.body.image;
+
+            if (!image) {
+                return res.status(404).json({
+                    message: "What do you want to really delete boy ?"
+                });
+            }
+            const lost = await Lost.findById(req.params.id);
+            if (!lost)
+                return res.status(404).json({
+                    message: "Object Lost not found"
+                });
+            if (lost.finder?.toString() !== req.user._id.toString() && lost.loser?.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: "You are not authorized to update this object." });
+            }
+            for (const img of lost.images) {
+                if (img.name === image.name) {
+                    await deleteImg(img.name);
+                    lost.images.filter(it => it.name === image.name);
+                    await lost.save();
+                    return res.status(200).json({
+                        message: "Deleting done"
+                    });
+                }
+            }
+            return res.status(404).json({
+                message: "Image not found"
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            })
+        }
+    },
     update: async(req, res) => {
         try {
-            const {lostId, position, images} = req.body;
+            const {lostId, position} = req.body;
 
             if (!lostId)
                 return res.status(404).json({
@@ -40,13 +181,12 @@ const controller = ({
                     message: "Object Lost not found"
                 });
             if (lost.finder?.toString() !== req.user._id.toString() && lost.loser?.toString() !== req.user._id.toString()) {
-                return res.status(403).json({ message: "You are not authorized to update this object." });
+                return res.status(403).json({
+                    message: "You are not authorized to update this object."
+                });
             }
             if (position) {
                 lost.position = position;
-            }
-            if (images) {
-                lost.images = images;
             }
             await lost.save();
             return res.status(200).json({

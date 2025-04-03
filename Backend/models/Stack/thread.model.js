@@ -18,10 +18,20 @@ const threadSchema = new mongoose.Schema({
         ref: "User"
     },
     profil: {
-        type: String,
-        required: true
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
     },
-    backgroup: {
+    backgroud: {
         type: String,
         required: true
     },

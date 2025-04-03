@@ -123,4 +123,16 @@ router.post('/img', upload.single('file'), async(req, res) => {
     }
 })
 
+router.get('/auth/callback', async(req, res) => {
+    try {
+        console.log(req.body);
+        console.log(req.query);
+        res.status(200).json(req.query);
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        })
+    }
+})
+
 module.exports = router;

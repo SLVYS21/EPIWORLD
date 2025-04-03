@@ -16,6 +16,21 @@ const userSchema = new mongoose.Schema({
         default: Date.now,
         required: true,
     },
+    profile: {
+        //By default The epitech  
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true,
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
+    },
     legend: {
         type: String,
         default: "Just a chill Guy"
@@ -53,7 +68,17 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["Waiting", "Validated", "Bloqued"],
         default: "Waiting"
-    }
+    },
+    fav: [{
+        post: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Post"
+        },
+        at: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 })
 
 userSchema.methods.compare = async (password) => {

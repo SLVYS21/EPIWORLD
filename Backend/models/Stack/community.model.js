@@ -10,6 +10,34 @@ const community = new mongoose.Schema({
         type: String,
         required: true,
     },
+    logo: {
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
+    },
+    background: {
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
+    },
     policy: [{
         rule: {
             type: String,

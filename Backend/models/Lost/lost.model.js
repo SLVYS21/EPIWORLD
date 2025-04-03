@@ -2,9 +2,24 @@ const mongoose = require('mongoose');
 
 const lostSchema = new mongoose.Schema({
     images: [{
-        type: String,
-        required: true
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        updated_at: {
+            type: Date,
+            default: Date.now
+        }
     }],
+    name: {
+        type: String,
+        required: true,
+        maxlength: 255
+    },
     position: {
         type: String,
         required: true
@@ -48,6 +63,10 @@ const lostSchema = new mongoose.Schema({
         type: String,
         enum: ["Loser", "Finder"],
         default: "Finder"
+    },
+    comment: {
+        type: Boolean,
+        default: true
     }
 });
 
