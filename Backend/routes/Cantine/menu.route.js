@@ -2,6 +2,10 @@ const express = require('express');
 const menuController = require('../../controllers/Cantine/menu.controller');
 const auth = require('../../middlewares/auth.middleware');
 const router = express.Router();
+const multer = require('multer');
+
+const storage = multer.memoryStorage();
+const upload =  multer({storage: storage});
 
 /**
  * @swagger
@@ -146,7 +150,7 @@ router.delete('/categories/:id', auth, menuController.deleteCategory);
  *       500:
  *         description: Internal server error
  */
-router.post('/menus', auth, menuController.createMenu);
+router.post('/menus', upload.array('images', 4), auth, menuController.createMenu);
 
 /**
  * @swagger
@@ -262,7 +266,7 @@ router.delete('/menus/:id', auth, menuController.deleteMenu);
  *       500:
  *         description: Internal server error
  */
-router.post('/variants', auth, menuController.createVariant);
+router.post('/variants', upload.array('images', 4), auth, menuController.createVariant);
 
 /**
  * @swagger

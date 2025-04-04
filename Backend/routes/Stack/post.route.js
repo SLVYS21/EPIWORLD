@@ -2,8 +2,12 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../../controllers/Stack/post.controller');
 const auth = require('../../middlewares/auth.middleware');
+const multer = require('multer');
 
-router.post('/posts', auth, auth, controller.create);
+const storage = multer.memoryStorage();
+const upload =  multer({storage: storage})
+
+router.post('/posts', upload.array('images', 4), auth, controller.create);
 
 router.put('/posts/status', auth, auth, controller.changeStatus);
 

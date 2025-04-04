@@ -2,6 +2,10 @@ const lostController = require('../../controllers/Lost/lost.controller');
 const express = require('express');
 const router = express.Router();
 const auth = require('../../middlewares/auth.middleware');
+const multer = require('multer');
+
+const storage = multer.memoryStorage();
+const upload =  multer({storage: storage})
 
 /**
  * @swagger
@@ -50,7 +54,7 @@ const auth = require('../../middlewares/auth.middleware');
  *       500:
  *         description: Internal server error.
 */
-router.post('/', auth, lostController.create);
+router.post('/', upload.array('images', 4), auth, lostController.create);
 
 /**
  * @swagger
