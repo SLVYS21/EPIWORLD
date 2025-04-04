@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de fichier</title>
+</head>
+<body>
+    <h2>Uploader un fichier</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Envoyer</button>
+    <p id="status"></p>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const status = document.getElementById('status');
+
+            if (fileInput.files.length === 0) {
+                status.textContent = "Veuillez sélectionner un fichier.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            fetch("http://localhost:8080/api/img", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                status.textContent = "Upload réussi !";
+                console.log("Réponse du serveur :", data);
+            })
+            .catch(error => {
+                status.textContent = "Erreur lors de l'upload.";
+                console.error("Erreur :", error);
+            });
+        }
+    </script>
+</body>
+</html>
