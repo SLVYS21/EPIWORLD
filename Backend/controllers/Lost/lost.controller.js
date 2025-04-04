@@ -7,7 +7,7 @@ const controller = ({
     create: async(req, res) => {
         try {
             const {name, position, status} = req.body;
-            const images = req.images;
+            const images = req.files;
 
             if (!images) {
                 return res.status(404).json({
@@ -19,8 +19,8 @@ const controller = ({
                     message: "Limit of 4 images"
                 });
             }
-            console.log("Trying creation");
-            if (!position || !["Finder", "Loser"].includes(status) || !name) {
+            console.log("Trying creation", req.body, images);
+            if (!position || !["found", "lost"].includes(status) || !name) {
                 return res.status(404).json({
                     message: "Please fill all the fields"
                 });
@@ -45,8 +45,8 @@ const controller = ({
                 name,
                 position,
                 images: imgs,
-                finder: (status === "Finder") ? req.user._id : null,
-                loser: (status === "loser") ? req.user._id : null
+                finder: (status === "found") ? req.user._id : null,
+                loser: (status === "lost") ? req.user._id : null
             });
             return res.status(200).json(lost);
         } catch (error) {

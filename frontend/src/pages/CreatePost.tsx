@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { Camera, X } from 'lucide-react';
+import axios from 'axios';
+import toast from "react-hot-toast";
+
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function CreatePost() {
-  const [images, setImages] = useState<string[]>([]);
+  // const [files, setFiles] = useState<File[]>([]);
+  // const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  // const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
@@ -10,30 +18,74 @@ export default function CreatePost() {
   const [type, setType] = useState<'lost' | 'found'>('lost');
   const [tags, setTags] = useState('');
 
+  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (files) {
+  //     const newImages = Array.from(files).map(file => URL.createObjectURL(file));
+  //     setImages(prev => [...prev, ...newImages]);
+  //   }
+  // };
+
+  // const removeImage = (index: number) => {
+  //   setImages(prev => prev.filter((_, i) => i !== index));
+  // };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file));
+      const newImages = Array.from(files);
       setImages(prev => [...prev, ...newImages]);
     }
   };
-
+  
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement post creation
-    console.log({
-      type,
-      title,
-      description,
-      location,
-      category,
-      tags: tags.split(',').map(tag => tag.trim()),
-      images
+    const token = localStorage.getItem("token");
+    console.log(token);
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!token) {
+      console.error("No authentication token found");
+      return;
+    }
+    const formData = new FormData();
+    for (const pair of formData.entries()) {
+      console.log("FormData before appending:", pair[0], pair[1]);
+    }
+    formData.append("name", title);
+    formData.append("status", type);
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("position", location);
+    formData.append("category", category);
+    tags.split(",").map(tag => formData.append("tags", tag.trim())); // Append tags separately
+    
+    images.forEach((image, index) => {
+      formData.append("images", image); // Append image files
     });
+    for (const pair of formData.entries()) {
+      console.log("FormData after appending:", pair[0], pair[1]);
+    }
+
+    try {
+      const response = await axios.post(`${backendUrl}/api/lost`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach token in headers
+          "Content-Type": "multipart/form-data"
+        },
+      });
+  
+      console.log("Post created successfully:", response.data);
+      toast.success("Post created successfully!");
+    } catch (error) {
+      console.error("Error creating post:", error);
+      toast.error("Error creating post!");
+    }
+  
+
   };
 
   return (
@@ -65,7 +117,7 @@ export default function CreatePost() {
               {images.map((image, index) => (
                 <div key={index} className="relative">
                   <img
-                    src={image}
+                    src={URL.createObjectURL(image)}
                     alt={`Upload ${index + 1}`}
                     className="w-full h-32 object-cover rounded-lg"
                   />

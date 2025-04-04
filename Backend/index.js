@@ -8,13 +8,22 @@ const swaggerUi = require("swagger-ui-express");
 const app = express();
 const cron = require('node-cron')
 const helmet = require('helmet')
+const multer = require('multer');
 
 dotenv.config();
 
 app.use(helmet());
 app.use(cors());
+
+const storage = multer.memoryStorage();
+const upload = multer({storage: storage, limits: {fileSize: 5 * 1024 * 1024}});
+
+app.use(upload.any());
+
 app.use(bodyparser.json())
 app.use(bodyparser.urlencoded({ extended: false }));
+
+
 
 mongoose
 .connect(process.env.MONGO_URI)
@@ -65,7 +74,7 @@ app.use("/api/", require('./routes/test.route'));
 
 app.use("/api/lost", require('./routes/Lost/lost.route'));
 
-app.use("/api/user", require('./routes/user.route'));
+app.use("/api/", require('./routes/user.route'));
 
 app.use("/api", require("./routes/Cantine/menu.route"));
 

@@ -5,9 +5,8 @@ const auth = require('../middlewares/auth.middleware')
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage
-});
+const upload = multer({storage: storage})
+
 
 /**
  * @swagger
@@ -62,7 +61,7 @@ router.post('/user/signup', upload.single('profile'), userController.signup);
 /**
  * @swagger
  * /api/user/login:
- *   get:
+ *   post:
  *     summary: Login a user
  *     tags: [Users]
  *     security:
@@ -86,7 +85,7 @@ router.post('/user/signup', upload.single('profile'), userController.signup);
  *       500:
  *         description: Internal server error
  */
-router.get('/user/login', userController.login);
+router.post('/user/login', userController.login);
 
 /**
  * @swagger

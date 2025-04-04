@@ -61,8 +61,8 @@ const lostSchema = new mongoose.Schema({
     }],
     type: {
         type: String,
-        enum: ["Loser", "Finder"],
-        default: "Finder"
+        enum: ["lost", "found"],
+        default: "found"
     },
     comment: {
         type: Boolean,

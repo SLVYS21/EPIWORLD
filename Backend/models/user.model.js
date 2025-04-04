@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -20,11 +20,9 @@ const userSchema = new mongoose.Schema({
         //By default The epitech  
         name: {
             type: String,
-            required: true
         },
         url: {
             type: String,
-            required: true,
         },
         updated_at: {
             type: Date,
@@ -82,7 +80,10 @@ const userSchema = new mongoose.Schema({
 })
 
 userSchema.methods.compare = async (password) => {
-    return bcrypt.compare(password, this.password);
+    console.log("This", this);
+    console.log(password, this.password);
+    const valid = await bcrypt.compare(password, this.password);
+    return valid;
 }
 
 userSchema.post('save', async function () {

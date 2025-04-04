@@ -1,5 +1,5 @@
 const User = require('../models/user.model')
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const {upload, get, deleteImg} = require('./image.controller')
@@ -10,9 +10,11 @@ const generateToken = (id) => {
 
 const userController = ({
     signup: async(req, res) => {
+        console.log('Inside');
         try {
             const {name, email, password, genre, birthdate} = req.body;
-
+            console.log(req.file);
+            console.log(req.body);
             if (!name || !email || !password || !genre || !["M", "F"].includes(genre) || !birthdate)
                 return res.status(404).json({
                     message: "Please fill the the required fields"
@@ -23,19 +25,20 @@ const userController = ({
                     message: "Already exist. Let login"
                 });
             let profile = {};
-            if (req.profile) {
-                const ret = upload(req.profile);
+            if (req.file) {
+                const ret = upload(req.file);
                 profile = {
                     name: ret.name,
                     url: name.url,
                     updated_at: new Date()
                 }
             }
+            const hashed = await bcrypt.hash(password, 10);
             const user = await User.create({
                 name,
                 email,
                 genre,
-                password: bcrypt.hash(password, 10),
+                password: hashed,
                 birthdate: new Date(birthdate),
                 profile
             });
@@ -54,8 +57,9 @@ const userController = ({
     },
     login: async(req, res) => {
         try {
-            const {email, password} = req.query;
+            const {email, password} = req.body;
 
+            console.log(req.body);
             if (!email || !password)
                 return res.status(404).json({
                     message: "Fill the fields"
@@ -66,7 +70,8 @@ const userController = ({
                     message: "Sorry you are not registered on this platform"
                 });
             }
-            if (!await user.compare(password))
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid)
                 return res.status(404).json({
                     message: "Invalid Password"
                 });
@@ -76,6 +81,7 @@ const userController = ({
                 token: generateToken(user._id)
             });
         } catch (error) {
+            console.log(error);
             return res.status(500).json({
                 message: error.message
             })

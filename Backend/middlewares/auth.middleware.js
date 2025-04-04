@@ -1,4 +1,5 @@
 const User = require("../models/user.model")
+const jwt = require("jsonwebtoken");
 
 const authMiddleware = async (req, res, next) => {
     try {
@@ -14,13 +15,13 @@ const authMiddleware = async (req, res, next) => {
       if (!user)
           return res.status(404).json({ message: "User not found"});
 
-      if (user.status === "Bloqued" || user.status === "Waiting")
-        return res.redirect("http://localhost/5173/login");
+      if (!user.admin && (user.status === "Bloqued" || user.status === "Waiting"))
+        return res.redirect("http://localhost:8081/auth");
 
       req.user = user;
       next();
     } catch (error) {
-      res.status(401).json({ message: "Invalid token" });
+      res.status(401).json({ message: error.message });
     }
   };
   

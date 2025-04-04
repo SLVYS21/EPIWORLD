@@ -109,7 +109,7 @@ router.post('/img', upload.single('file'), async(req, res) => {
 
         await s3.send(command);
         const command_2 = new GetObjectCommand(params);
-        const url = await getSignedUrl(s3, command_2, { expiresIn: 3600 });
+        const url = await getSignedUrl(s3, command_2, {expiresIn: 3600});
         console.log(url);
         res.status(200).json({
             message: "Cool Uploading "
