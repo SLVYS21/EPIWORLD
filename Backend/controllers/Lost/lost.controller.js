@@ -76,7 +76,7 @@ const controller = ({
                 return res.status(404).json({
                     message: "Please set all the essentials"
                 });
-            const lost = await Post.findById(lostId);
+            const lost = await Lost.findById(lostId);
             if (!lost)
                 return res.status(404).json({
                     message: "Post not found"
@@ -98,7 +98,8 @@ const controller = ({
             });
             return res.status(200).json(comment);
         } catch (error) {
-            return res.status(500).jsons({
+            console.log("Error creating comment", error);
+            return res.status(500).json({
                 message: error.message
             })
         }
@@ -111,7 +112,9 @@ const controller = ({
                     message: "Object Lost not found"
                 });
             if (lost.finder?.toString() !== req.user._id.toString() && lost.loser?.toString() !== req.user._id.toString()) {
-                return res.status(403).json({ message: "You are not authorized to update this object." });
+                return res.status(403).json({
+                    message: "You are not authorized to update this object."
+                });
             }
             if (lost.images.length >= 4) {
                 return res.status(404).json({
@@ -333,7 +336,7 @@ const controller = ({
                 return res.status(404).json({
                     message: "please the post Id to allow us to find the comments"
                 });
-            const posts = await Comment.find({lost: lostId}).populate('poster', 'name email tek')
+            const posts = await Comment.find({lost: lostId}).populate('poster', 'name email tek profile')
             .sort({_id: -1})
             .skip((page - 1) * limit)
             .limit(limit)

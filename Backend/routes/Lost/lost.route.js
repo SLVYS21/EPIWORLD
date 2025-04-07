@@ -275,6 +275,8 @@ router.get('/losers', auth, lostController.getLosers);
  */
 router.get('/comments', auth, lostController.getLostComments);
 
+router.post('/comment', auth, lostController.commentLost);
+
 /**
  * @swagger
  * components:

@@ -40,15 +40,32 @@ export interface Post {
   comments: Comment[];
 }
 
-
-
-
 export interface Comment {
-  id: string;
-  userId: string;
-  content: string;
+  _id: string; // MongoDB ID
+  body: string;
   createdAt: string;
-  replies: Reply[];
+  updatedAt: string;
+  likes: string[];        // list of user IDs who liked
+  dislikes: string[];     // list of user IDs who disliked
+  count: {
+    likes: number;
+    dislikes: number;
+    comments: number;
+  };
+  poster: {
+    _id: string;
+    name: string;
+    email: string;
+    profile: {
+      updated_at: string;
+    };
+  };
+  flags: string[];
+  lost: string;
+  updated: boolean;
+  __v: number;
+
+  replies?: Comment[];
 }
 
 export interface Reply {

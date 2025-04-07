@@ -59,6 +59,8 @@ const comment = new mongoose.Schema({
     }
 });
 
+const Comment = mongoose.model('Comment', comment);
+
 comment.pre('save', function () {
     this.nblikes = this.likes.length;
     this.nbdislikes = this.dislikes.length;
@@ -75,4 +77,4 @@ comment.post('save', async function () {
     await this.save();
 })
 
-module.exports = mongoose.model('Comment', comment)
+module.exports = Comment;

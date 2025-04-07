@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import PostCard from './PostCard';
 import axios from 'axios';
-import { Post } from '@/types';
+import { Post, Comment } from '@/types';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -38,7 +38,23 @@ const MOCK_POSTS = [
 
 export default function Feed() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const token = localStorage.getItem('token');
+
+  const fetchComments = useCallback(async (postId: string) => {
+    try {
+        const res = await axios.get<Comment[]>(`${backendUrl}/api/lost/comments?page=1&limit=10&lostId=${postId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setComments(res.data);
+      console.log("Comments",res.data);
+      
+    } catch (error) {
+      console.error('Error fetching post data:', error);
+    }
+  },[token]);
 
   const fetchPostData = useCallback(async () => {
     try {
@@ -60,17 +76,19 @@ export default function Feed() {
         status: item.status || 'unknown',
         createdAt: item.createdAt,
         likes: 0,
-        comments: [],
+        comments: comments || [],
         tags: item.tags || [],
         finder: item.finder || null,
         updatedAt: item.updatedAt,
+        // replies = item. ?? []
+
       }));
 
       setPosts(formattedPosts);
     } catch (error) {
       console.error('Error fetching post data:', error);
     }
-  },[token]);
+  },[token, comments]);
 
   useEffect(() => {
     fetchPostData();
@@ -79,7 +97,7 @@ export default function Feed() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       {posts.map((post) => (
-        <PostCard key={post._id} post={post} />
+        <PostCard key={post._id} post={post} fetchComments={fetchComments} />
       ))}
     </div>
   );
