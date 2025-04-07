@@ -6,20 +6,42 @@ export interface User {
   bio?: string;
 }
 
+// export interface Post {
+//   _id: string;
+//   // userId: string;
+//   loser: { _id: string | null; name: string | null; avatar: string | null; email: string | null };
+//   type: 'lost' | 'found';
+//   title: string;
+//   description: string;
+//   images: string[];
+//   location: string;
+//   category: string;
+//   tags: string[];
+//   createdAt: string;
+//   likes: number;
+//   comments: Comment[];
+// }
+
 export interface Post {
-  id: string;
-  userId: string;
-  type: 'lost' | 'found';
-  title: string;
-  description: string;
-  images: string[];
-  location: string;
+  _id: string;
+  images: { url: string }[];
   category: string;
-  tags: string[];
+  description: string;
+  name: string;
+  position: string;
+  status: string;
+  loser: { _id: string; name: string; email: string };
+  finder: null | any;
+  type: 'lost' | 'found';
   createdAt: string;
+  updatedAt: string;
+  tags: string[];
   likes: number;
   comments: Comment[];
 }
+
+
+
 
 export interface Comment {
   id: string;

@@ -6,7 +6,7 @@ const {upload, get, deleteImg} = require('../image.controller')
 const controller = ({
     create: async(req, res) => {
         try {
-            const {name, position, status} = req.body;
+            const {name, position, status, description, category} = req.body;
             const images = req.files;
 
             if (!images) {
@@ -28,28 +28,41 @@ const controller = ({
             const imgs = [];
 
             for (const image of images) {
+                console.log("Trying to upload")
                 const ret = await upload(image);
+                console.log(ret);
                 if (ret) {
                     imgs.push({
                         name: ret.name,
                         url: ret.url,
                         updated_at: new Date()
                     });
+                    console.log("Image uploaded", ret);
                     continue;
                 }
                 return res.status(410).json({
                     message: "Invalid Image"
-                })
+                });
             }
+            console.log("All images uploaded", imgs);
             const lost = await Lost.create({
                 name,
                 position,
                 images: imgs,
                 finder: (status === "found") ? req.user._id : null,
-                loser: (status === "lost") ? req.user._id : null
+                loser: (status === "lost") ? req.user._id : null,
+                description,
+                category
             });
+            console.log("Lost created", lost);
+            if (!lost) {
+                return res.status(404).json({
+                    message: "Lost not created"
+                });
+            }
             return res.status(200).json(lost);
         } catch (error) {
+            console.log("Error creating lost", error);
             return res.status(500).json({
                 message: error.message
             })

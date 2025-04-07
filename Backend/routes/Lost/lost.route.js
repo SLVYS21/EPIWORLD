@@ -195,7 +195,7 @@ router.post('/iamtheloser', auth, lostController.iamtheloser);
  *       500:
  *         description: Internal server error.
 */
-router.get('/', auth, lostController.getLosers);
+router.get('/', auth, lostController.get);
 
 /**
  * @swagger

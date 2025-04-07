@@ -97,4 +97,19 @@
   .tag {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
+  
+}
+
+@layer components {
+  .dashboard-card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-gray-100;
+  }
+  
+  .dashboard-stat {
+    @apply text-2xl font-bold;
+  }
+  
+  .dashboard-label {
+    @apply text-sm text-gray-500;
+  }
 }

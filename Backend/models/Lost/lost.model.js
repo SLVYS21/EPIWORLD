@@ -15,6 +15,15 @@ const lostSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
+    category: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true,
+        maxlength: 500
+    },
     name: {
         type: String,
         required: true,
@@ -26,8 +35,8 @@ const lostSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["", "", ""],
-        default: ""
+        enum: ["Unsolved", "Solved"],
+        default: "Unsolved"
     },
     loser: {
         type: mongoose.Schema.Types.ObjectId,
@@ -47,7 +56,6 @@ const lostSchema = new mongoose.Schema({
     },
     refundAt: {
         type: Date,
-        default: Date.now
     },
     losers: [{
         user: {

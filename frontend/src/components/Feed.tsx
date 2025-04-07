@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PostCard from './PostCard';
+import axios from 'axios';
+import { Post } from '@/types';
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const MOCK_POSTS = [
   {
@@ -33,10 +37,49 @@ const MOCK_POSTS = [
 ] as const;
 
 export default function Feed() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const token = localStorage.getItem('token');
+
+  const fetchPostData = useCallback(async () => {
+    try {
+      const response = await axios.get<Post[]>(`${backendUrl}/api/lost?page=1&limit=10`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      const formattedPosts = response.data.map((item): Post => ({
+        _id: item._id,
+        loser: item.loser,
+        type: item.type,
+        name: item.name,
+        description: item.description,
+        images: item.images,
+        position: item.position,
+        category: item.category,
+        status: item.status || 'unknown',
+        createdAt: item.createdAt,
+        likes: 0,
+        comments: [],
+        tags: item.tags || [],
+        finder: item.finder || null,
+        updatedAt: item.updatedAt,
+      }));
+
+      setPosts(formattedPosts);
+    } catch (error) {
+      console.error('Error fetching post data:', error);
+    }
+  },[token]);
+
+  useEffect(() => {
+    fetchPostData();
+  }, [fetchPostData]);
+  
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {MOCK_POSTS.map((post) => (
-        <PostCard key={post.id} post={post} />
+      {posts.map((post) => (
+        <PostCard key={post._id} post={post} />
       ))}
     </div>
   );

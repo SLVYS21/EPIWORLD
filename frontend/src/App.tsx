@@ -10,6 +10,14 @@ import CantineApp from "./pages/CantineApp";
 import ChannelSelection from "./pages/ChannelSelection";
 import UserDashboard from "./pages/userDashboard";
 import Index from "./pages/Index";
+import IndexDashboard from "./pages/IndexDashboard";
+import NotFound from "./pages/NotFound";
+
+// Admin routes
+import AdminDashboard from "./pages/admin/Dashboard";
+import CafeteriaAdmin from "./pages/admin/Cafeteria";
+import LostFoundAdmin from "./pages/admin/LostFound";
+import ForumAdmin from "./pages/admin/Forum";
 
 
 function App() {
@@ -24,12 +32,23 @@ function App() {
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/stackoverflow" element={<Index />} />
 
+        <Route path="/admin/index" element={<IndexDashboard />} />
+
+         {/* Admin Routes */}
+         <Route path="/admin" element={<AdminDashboard />} />
+          {/* <Route path="/admin/cafeteria" element={<CafeteriaAdmin />} />
+          <Route path="/admin/lost-found" element={<LostFoundAdmin />} />
+          <Route path="/admin/forum" element={<ForumAdmin />} /> */}
+      
+
         {/* Protected Routes (Wrapped in Layout) */}
         <Route element={<Layout />}>
           <Route path="/home" element={<Feed />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <Toaster position="bottom-center" />

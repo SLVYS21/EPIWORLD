@@ -14,10 +14,11 @@ const s3 = new S3Client({
 
 const uploadImg = async(file) => {
     try {
+        console.log("file", file);
         if (!file)
             return null;
         const name = uniqueName();
-        const buffer = await sharp(buffer).resize({
+        const buffer = await sharp(file.buffer).resize({
             height: 1080,
             width: 1920,
             fit: "contain"
@@ -32,12 +33,13 @@ const uploadImg = async(file) => {
         await s3.send(send_command);
 
         const get_command = new GetObjectCommand(params);
-        const url = getSignedUrl(s3, get_command, {expiresIn: 3600});
+        const url = await getSignedUrl(s3, get_command, {expiresIn: 3600});
         return {
             name,
             url
         }
     } catch (error) {
+        console.log("Error uploading image to S3", error);
         return null;
     }
 }

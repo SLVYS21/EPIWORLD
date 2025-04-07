@@ -73,8 +73,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     try {
       const response = await axios.post(`${backendUrl}/api/lost`, formData, {
         headers: {
-          Authorization: `Bearer ${token}`, // Attach token in headers
-          "Content-Type": "multipart/form-data"
+          Authorization: `Bearer ${token}`,
         },
       });
   
@@ -85,7 +84,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       toast.error("Error creating post!");
     }
   
-
   };
 
   return (

@@ -13,14 +13,16 @@ dotenv.config();
 
 app.use(helmet());
 app.use(cors());
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// app.use(bodyparser.json());
+// app.use(bodyparser.urlencoded({ extended: false }));
 
 mongoose
 .connect(process.env.MONGO_URI)
 .then(() => {
     console.log("Connected to MongoDB");
-    app.listen(8080, () => console.log("Server running on port 8080"));
+    app.listen(1076, () => console.log("Server running on port 1076"));
 })
 .catch((err) => console.log(err));
 
@@ -35,7 +37,7 @@ const swaggerOptions = {
           name: "Sylvanus BONI",
           email: "sylvanusboni21@gmail.com",
         },
-        servers: ["http://localhost:8080"],
+        servers: ["http://localhost:1076"],
     },
     components: {
         securitySchemes: {
@@ -57,7 +59,6 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-app.use(express.json());
 
 // app.use("/api");
 

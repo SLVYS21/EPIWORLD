@@ -1,12 +1,8 @@
 const userController = require('../controllers/user.controller');
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewares/auth.middleware')
-const multer = require('multer');
-
-const storage = multer.memoryStorage();
-const upload = multer({storage: storage})
-
+const auth = require('../middlewares/auth.middleware');
+const upload = require('../middlewares/upload.middleware');
 
 /**
  * @swagger
@@ -85,7 +81,7 @@ router.post('/user/signup', upload.single('profile'), userController.signup);
  *       500:
  *         description: Internal server error
  */
-router.post('/user/login', userController.login);
+router.post('/user/login', upload.single('profile'), userController.login);
 
 /**
  * @swagger
