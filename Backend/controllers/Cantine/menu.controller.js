@@ -8,6 +8,19 @@ const {upload, get, deleteImg} = require('../image.controller');
 
 function getMinMax(variants) 
 {
+    console.log(variants, variants.length);
+    if (variants.length === 0) {
+        return {
+            min: 0,
+            max: 0
+        }
+    }
+    if (variants.length === 1) {
+        return {
+            min: variants[0].price.value,
+            max: variants[0].price.value
+        }
+    }
     var list = [], min = 0, max = 0;
     for (const variant of variants) {
         list.push(variant.price.value);
@@ -196,7 +209,10 @@ const menuController = ({
                     description,
                     images: imgs,
                     category,
-                    price,
+                    price: {
+                        currency: "XOF",
+                        value: parseInt(price)
+                    },
                     minPrice: price,
                     maxPrice: price
                 }
@@ -214,8 +230,8 @@ const menuController = ({
     },
     createVariant: async(req, res) => {
         try {
-            const {menuId, name, price, mainpic, images, defaultStock} = req.body;
-
+            const {menuId, name, price, mainpic, defaultStock} = req.body;
+            const images = req.files;
             if (!images) {
                 return res.status(404).json({
                     message: "Images are required"
@@ -234,7 +250,7 @@ const menuController = ({
             }
 
             const exist = menu.variants.find(it => it.name.trim().toLowerCase() === name.trim().toLowerCase());
-            if (!exist)
+            if (exist)
                 return res.status(403).json({
                     message: "This menu already have this variant in stock"
                 });
@@ -262,7 +278,7 @@ const menuController = ({
             const variant = await Variant.create({
                 name,
                 price: {
-                    value: parseInt(price.value),
+                    value: parseInt(price),
                     currency: "XOF"
                 },
                 mainpic,
@@ -380,8 +396,8 @@ const menuController = ({
                     });
                 menu.price = price;
             }
-            if (mainpic)
-                menu.mainpic = mainpic;
+            // if (mainpic)
+            //     menu.mainpic = mainpic;
             if (defaultStock) {
                 if (menu.variants !== null) {
                     menu.defaultStock = defaultStock;

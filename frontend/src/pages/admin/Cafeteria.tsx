@@ -29,9 +29,28 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { CantineCategory, MenuAdminItem } from "@/types";
-import { Plus, Coffee, Clock, CheckCircle, XCircle } from "lucide-react";
+import {
+  Plus,
+  Coffee,
+  Clock,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+  MoreVertical,
+  Eye,
+  PlusCircle,
+} from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -61,20 +80,61 @@ const CafeteriaAdmin = () => {
   const [editItem, setEditItem] = useState<MenuAdminItem | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
+  const [viewVariantItem, setViewVariantItem] = useState(null);
+  const [createVariantMenuId, setCreateVariantMenuId] = useState(null);
+  const [newVariant, setNewVariant] = useState({
+    name: "",
+    price: "",
+    currency: "XOF",
+    defaultStock: 0,
+    images: [] as File[],
+  });
+
+  const handleCreateVariant = async () => {
+    // Send newVariant with createVariantMenuId to backend
+    console.log("Create variant", createVariantMenuId, newVariant);
+    try {
+      const formData = new FormData();
+      formData.append("name", newVariant.name);
+      formData.append("price", newVariant.price);
+      formData.append("defaultStock", newVariant.defaultStock.toString());
+      formData.append("currency", newVariant.currency);
+      formData.append("menuId", createVariantMenuId);
+      newVariant.images.forEach((image, index) => {
+        formData.append("images", image);
+      });
+      const response = await axios.post(
+        `${backendUrl}/api/variants`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Variant created successfully");
+      setCreateVariantMenuId(null);
+    } catch (error) {
+      console.error("Error creating variant:", error);
+      toast.error("Error creating variant");
+    }
+  };
+
+  const openViewVariantsDialog = (item: MenuAdminItem) =>
+    setViewVariantItem(item);
+  const openCreateVariantDialog = (menuId: string) =>
+    setCreateVariantMenuId(menuId);
 
   const handleImageNavigation = (id: string, direction: -1 | 1) => {
     setImageIndexes((prev) => {
       const current = prev[id] || 0;
       const menu = menus.find((m) => m._id === id);
       if (!menu) return prev;
-  
+
       const newIndex = current + direction;
       if (newIndex < 0 || newIndex >= menu.images.length) return prev;
-  
+
       return { ...prev, [id]: newIndex };
     });
   };
-  
 
   const openEditForm = (item: MenuAdminItem) => {
     setEditItem({ ...item });
@@ -548,97 +608,112 @@ const CafeteriaAdmin = () => {
             ))}
           </TabsContent>
 
-          {/* <TabsContent value="menu" className="space-y-4 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Card key={index}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex justify-between">
-                      <span>Item #{index + 1}</span>
-                      <span className="text-cafeteria">
-                        ${(Math.random() * 10 + 2).toFixed(2)}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="aspect-video bg-muted rounded-md mb-3 flex items-center justify-center">
-                      <Coffee className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-medium">
-                      {
-                        [
-                          "Cheeseburger",
-                          "Veggie Wrap",
-                          "Caesar Salad",
-                          "Chicken Sandwich",
-                          "Pizza Slice",
-                          "French Fries",
-                        ][index % 6]
-                      }
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    </p>
-                    <div className="flex gap-2 mt-4">
-                      <Button size="sm" variant="outline">
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="destructive">
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent> */}
           <TabsContent value="menu" className="space-y-4 mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {menus.map((item) => (
-                <Card key={item._id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex justify-between">
-                      <span>{item.name}</span>
-                      <span className="text-cafeteria">
-                        {item.price.value} {item.price.currency}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="aspect-video bg-muted rounded-md mb-3 flex items-center justify-center overflow-hidden">
-                      {item.images.length > 0 ? (
-                        <img
-                          src={item.images[item.mainpic]?.url}
-                          alt={item.name}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <Coffee className="h-8 w-8 text-muted-foreground" />
-                      )}
-                    </div>
-                    <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.description}
-                    </p>
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openEditForm(item)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => openDeleteDialog(item._id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {menus.length === 0 ? (
+                <div className="col-span-full text-center text-muted-foreground">
+                  No menu items found.
+                </div>
+              ) : (
+                menus.map((item) => {
+                  const imageIndex = imageIndexes[item._id] || 0;
+                  return (
+                    <Card key={item._id}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex justify-between">
+                          <div className="flex items-right gap-2 mr-10">
+                            <span>{item.name}</span>
+                            <span className="text-cafeteria">
+                              {item.price.value} {item.price.currency}
+                            </span>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-5 h-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  openCreateVariantDialog(item._id)
+                                }
+                              >
+                                <PlusCircle className="w-4 h-4 mr-2" />
+                                Create Variant
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => openViewVariantsDialog(item)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Variants
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="relative aspect-video bg-muted rounded-md mb-3 flex items-center justify-center overflow-hidden">
+                          {item.images.length > 0 ? (
+                            <>
+                              <img
+                                src={item.images[imageIndex]?.url}
+                                alt={item.name}
+                                className="object-cover w-full h-full"
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-50"
+                                onClick={() =>
+                                  handleImageNavigation(item._id, -1)
+                                }
+                                disabled={imageIndex <= 0}
+                              >
+                                <ChevronLeft className="w-5 h-5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-50"
+                                onClick={() =>
+                                  handleImageNavigation(item._id, 1)
+                                }
+                                disabled={imageIndex >= item.images.length - 1}
+                              >
+                                <ChevronRight className="w-5 h-5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Coffee className="h-8 w-8 text-muted-foreground" />
+                          )}
+                        </div>
+
+                        <h3 className="font-medium">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
+                        <div className="flex gap-2 mt-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditForm(item)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => openDeleteDialog(item._id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
             </div>
 
             {/* Edit Form Dialog */}
@@ -709,6 +784,141 @@ const CafeteriaAdmin = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            {/* View Variants Dialog */}
+            <Dialog
+              open={!!viewVariantItem}
+              onOpenChange={() => setViewVariantItem(null)}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    Variants for {viewVariantItem?.name}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  {viewVariantItem?.variants?.length ? (
+                    viewVariantItem.variants.map((variant, idx) => (
+                      <div key={idx} className="border p-2 rounded-md">
+                        <p className="font-medium">{variant.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {variant.price.value} {variant.price.currency}
+                        </p>
+                        <p className="text-sm">Stock: {variant.defaultStock}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">No variants found.</p>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            {/* Create Variant Dialog */}
+            <Dialog
+              open={!!createVariantMenuId}
+              onOpenChange={() => setCreateVariantMenuId(null)}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Variant</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                <div className="space-y-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const files = e.target.files;
+                              if (!files) return;
+
+                              const newFiles = Array.from(files);
+                              if (
+                                newVariant.images.length + newFiles.length >
+                                4
+                              ) {
+                                toast.error(
+                                  "You can only upload up to 4 images."
+                                );
+                                return;
+                              }
+
+                              setNewVariant({
+                                ...newVariant,
+                                images: [...newVariant.images, ...newFiles],
+                              });
+                            }}
+                            disabled={newVariant.images.length >= 4}
+                          />
+
+                          {newVariant.images.length > 0 && (
+                            <div className="flex items-center gap-4">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setImageIndex((i) => i - 1)}
+                                disabled={imageIndex === 0}
+                              >
+                                ←
+                              </Button>
+
+                              <img
+                                src={URL.createObjectURL(
+                                  newVariant.images[imageIndex]
+                                )}
+                                alt="Preview"
+                                className="w-32 h-32 object-cover rounded"
+                              />
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setImageIndex((i) => i + 1)}
+                                disabled={
+                                  imageIndex === newVariant.images.length - 1
+                                }
+                              >
+                                →
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                  <Input
+                    placeholder="Variant Name"
+                    value={newVariant.name}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, name: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Price"
+                    type="number"
+                    value={newVariant.price}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, price: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Currency"
+                    value={newVariant.currency}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, currency: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Stock"
+                    type="number"
+                    value={newVariant.defaultStock}
+                    onChange={(e) =>
+                      setNewVariant({
+                        ...newVariant,
+                        defaultStock: Number(e.target.value),
+                      })
+                    }
+                  />
+                  {/* Optional: Image uploader here */}
+                  <Button onClick={handleCreateVariant}>Create</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="daily" className="space-y-4 mt-6">
