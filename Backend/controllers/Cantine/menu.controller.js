@@ -4,6 +4,7 @@ const DailyMenu = require('../../models/Cantine/dailymenu.model');
 const DailyPoint = require('../../models/Cantine/dailypoint.model');
 const Variant = require('../../models/Cantine/variant.model');
 const User = require('../../models/user.model');
+const {upload, get, deleteImg} = require('../image.controller');
 
 function getMinMax(variants) 
 {
@@ -28,6 +29,21 @@ const menuController = ({
                 {new: true, upsert: true}
             );
             return res.status(200).json(exists);
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            });
+        }
+    },
+    getCategories: async(req, res) => { 
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+
+            const categories = await Category.find()
+            .skip((page - 1) * limit)
+            .limit(limit);
+            return res.status(200).json(categories);
         } catch (error) {
             return res.status(500).json({
                 message: error.message
@@ -116,6 +132,20 @@ const menuController = ({
             });
         }
     },
+    getMenus: async(req, res) => {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const menus = await Menu.find({
+                deleted: false
+            }).sort({_id: -1}).limit(limit).skip((page - 1) * limit).populate("variants");
+            return res.status(200).json(menus);
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
+            }); 
+        }
+    },
     createMenu: async(req, res) => {
         try {
             /*
@@ -125,7 +155,7 @@ const menuController = ({
                 }
             */
             const {name, description, mainpic, category, price} = req.body;
-            const images = req.images;
+            const images = req.files;
             if (!images) {
                 return res.status(404).json({
                     message: "Images are required"
@@ -139,6 +169,11 @@ const menuController = ({
             const exist = await Menu.findOne({
                 name: {$regex: new RegExp(`^${name.trim()}$`, 'i')}
             });
+            console.log(exist);
+            if (exist)
+                return res.status(404).json({
+                    message: "Menu already exist"
+                });
             const imgs = [];
 
             for (const image of images) {
@@ -156,29 +191,22 @@ const menuController = ({
                 })
             }
 
-            if (!exist)
-                return res.status(404).json({
-                    message: "Menu already exist"
-                });
-            const menu = await Menu.findOneAndUpdate({
-                    name
-                }, 
-                {
+            const menu = await Menu.create({
+                    name,
                     description,
                     images: imgs,
                     category,
                     price,
                     minPrice: price,
                     maxPrice: price
-                }, {
-                    new: true,
-                    insert: true
-            });
-
+                }
+            );
+            console.log(menu);
             return res.status(200).json(
                 menu
             );
         } catch (error) {
+            console.log(error);
             return res.status(500).json({
                 error: error.message
             })

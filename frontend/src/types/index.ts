@@ -6,22 +6,6 @@ export interface User {
   bio?: string;
 }
 
-// export interface Post {
-//   _id: string;
-//   // userId: string;
-//   loser: { _id: string | null; name: string | null; avatar: string | null; email: string | null };
-//   type: 'lost' | 'found';
-//   title: string;
-//   description: string;
-//   images: string[];
-//   location: string;
-//   category: string;
-//   tags: string[];
-//   createdAt: string;
-//   likes: number;
-//   comments: Comment[];
-// }
-
 export interface Post {
   _id: string;
   images: { url: string }[];
@@ -101,6 +85,12 @@ export type Category = {
   type: string;
 };
 
+export type CantineCategory = {
+  _id: string;
+  name: string;
+  description: string;
+};
+
 export type CartItem = MenuItem & {
   quantity: number;
 };
@@ -168,4 +158,34 @@ export interface SearchFilters {
   query: string;
   tags: string[];
   sort: SortOption;
+}
+
+export interface CurrencyValue {
+  value: number;
+  currency: string;
+}
+
+export interface MenuImage {
+  _id: string;
+  name: string;
+  url: string;
+  updated_at: string;
+}
+
+export interface MenuAdminItem {
+  _id: string;
+  name: string;
+  description: string;
+  category: string; // or possibly a Category object if populated
+  price: CurrencyValue;
+  minPrice: CurrencyValue;
+  maxPrice: CurrencyValue;
+  images: MenuImage[];
+  variants: any[]; // update this if you have a specific structure for variants
+  mainpic: number;
+  quant: boolean;
+  active: boolean;
+  stock: number;
+  deleted: boolean;
+  __v: number;
 }

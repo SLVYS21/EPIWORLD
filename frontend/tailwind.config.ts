@@ -79,18 +79,18 @@ export default {
 					history: "#FEF3C7",    // Soft yellow
 					default: "#F3F4F6"     // Default light gray
 				},
-				//   cafeteria: {
-				// 	DEFAULT: '#f97316',
-				// 	light: '#fdba74',
-				//   },
-				//   lost: {
-				// 	DEFAULT: '#8b5cf6',
-				// 	light: '#c4b5fd',
-				//   },
-				//   forum: {
-				// 	DEFAULT: '#10b981',
-				// 	light: '#6ee7b7',
-				//   },
+				  cafeteria: {
+					DEFAULT: '#f97316',
+					light: '#fdba74',
+				  },
+				  lost: {
+					DEFAULT: '#8b5cf6',
+					light: '#c4b5fd',
+				  },
+				  forum: {
+					DEFAULT: '#10b981',
+					light: '#6ee7b7',
+				  },
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

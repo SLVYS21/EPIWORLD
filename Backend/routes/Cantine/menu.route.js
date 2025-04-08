@@ -43,6 +43,22 @@ const upload =  multer({storage: storage});
  */
 router.post('/categories', auth, menuController.createCategory);
 
+router.get('/categories', auth, menuController.getCategories);
+/**
+ * @swagger
+ * /api/categories:
+ *   get:
+ *     summary: Get all categories
+ *     tags: [Menu]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Categories retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */
+
 /**
  * @swagger
  * /api/categories:
@@ -151,6 +167,22 @@ router.delete('/categories/:id', auth, menuController.deleteCategory);
  *         description: Internal server error
  */
 router.post('/menus', upload.array('images', 4), auth, menuController.createMenu);
+
+router.get('/menus', auth, menuController.getMenus);
+/**
+ * @swagger
+ * /api/menus:
+ *   get:
+ *     summary: Get all categories
+ *     tags: [Menu]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Menus retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */
 
 /**
  * @swagger
