@@ -78,7 +78,9 @@ const CafeteriaAdmin = () => {
   const [menus, setMenus] = useState<MenuAdminItem[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
   const [editItem, setEditItem] = useState<MenuAdminItem | null>(null);
+  const [editItem2, setEditItem2] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId2, setDeleteId2] = useState<string | null>(null);
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
   const [viewVariantItem, setViewVariantItem] = useState(null);
   const [createVariantMenuId, setCreateVariantMenuId] = useState(null);
@@ -89,6 +91,14 @@ const CafeteriaAdmin = () => {
     defaultStock: 0,
     images: [] as File[],
   });
+  const [currentIndex, setCurrentIndex] = useState(0);
+  useEffect(() => {
+    // Reset index when opening a new item
+    setCurrentIndex(0);
+  }, [viewVariantItem]);
+
+  const variants = viewVariantItem?.variants || [];
+  const currentVariant = variants[currentIndex];
 
   const handleCreateVariant = async () => {
     // Send newVariant with createVariantMenuId to backend
@@ -140,6 +150,10 @@ const CafeteriaAdmin = () => {
     setEditItem({ ...item });
   };
 
+  const openEditForm2 = (item: MenuAdminItem) => {
+    setEditItem2({ ...item });
+  };
+
   const handleUpdateMenu = async () => {
     if (!editItem) return;
     try {
@@ -160,14 +174,53 @@ const CafeteriaAdmin = () => {
     }
   };
 
+  const handleUpdateVariant = async () => {
+    if (!editItem) return;
+    try {
+      const updated = {
+        name: editItem.name,
+        description: editItem.description,
+        price: editItem.price,
+      };
+      await axios.put(`${backendUrl}/api/variants/${editItem._id}`, updated, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Menu updated");
+      setEditItem(null);
+      // re-fetch or update menus
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update");
+    }
+  };
+
   const openDeleteDialog = (id: string) => {
     setDeleteId(id);
+  };
+
+  const openDeleteDialog2 = (id: string) => {
+    setDeleteId2(id);
   };
 
   const handleDeleteMenu = async () => {
     if (!deleteId) return;
     try {
       await axios.delete(`${backendUrl}/api/menus/${deleteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Deleted successfully");
+      setDeleteId(null);
+      // re-fetch or update menus
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete");
+    }
+  };
+
+  const handleDeleteVariant = async () => {
+    if (!deleteId) return;
+    try {
+      await axios.delete(`${backendUrl}/api/variants/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Deleted successfully");
@@ -715,7 +768,6 @@ const CafeteriaAdmin = () => {
                 })
               )}
             </div>
-
             {/* Edit Form Dialog */}
             <Dialog open={!!editItem} onOpenChange={() => setEditItem(null)}>
               <DialogContent>
@@ -760,7 +812,6 @@ const CafeteriaAdmin = () => {
                 )}
               </DialogContent>
             </Dialog>
-
             {/* Delete Confirmation Dialog */}
             <AlertDialog
               open={!!deleteId}
@@ -795,21 +846,195 @@ const CafeteriaAdmin = () => {
                     Variants for {viewVariantItem?.name}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-2">
-                  {viewVariantItem?.variants?.length ? (
-                    viewVariantItem.variants.map((variant, idx) => (
-                      <div key={idx} className="border p-2 rounded-md">
-                        <p className="font-medium">{variant.name}</p>
+
+                {variants.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setCurrentIndex((prev) => prev - 1)}
+                        disabled={currentIndex === 0}
+                      >
+                        <ChevronLeft />
+                      </Button>
+
+                      <div className="border p-4 rounded-md flex-1 mx-4">
+                        <p className="font-medium">{currentVariant.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {variant.price.value} {variant.price.currency}
+                          <div className="relative aspect-video bg-muted rounded-md mb-3 flex items-center justify-center overflow-hidden">
+                            {currentVariant.images.length > 0 ? (
+                              <>
+                                <img
+                                  src={currentVariant.images[imageIndex]?.url}
+                                  alt={currentVariant.name}
+                                  className="object-cover w-full h-full"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-50"
+                                  onClick={() =>
+                                    handleImageNavigation(
+                                      currentVariant._id,
+                                      -1
+                                    )
+                                  }
+                                  disabled={imageIndex <= 0}
+                                >
+                                  <ChevronLeft className="w-5 h-5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white disabled:opacity-50"
+                                  onClick={() =>
+                                    handleImageNavigation(currentVariant._id, 1)
+                                  }
+                                  disabled={
+                                    imageIndex >=
+                                    currentVariant.images.length - 1
+                                  }
+                                >
+                                  <ChevronRight className="w-5 h-5" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Coffee className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          {currentVariant.price.value}{" "}
+                          {currentVariant.price.currency}
                         </p>
-                        <p className="text-sm">Stock: {variant.defaultStock}</p>
+                        <p className="text-sm">
+                          Stock: {currentVariant.defaultStock}
+                        </p>
+                        <div className="flex gap-2 mt-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditForm2(currentVariant)}
+                          >
+                            Edit
+                          </Button>
+
+                          <Dialog
+                            open={!!editItem2}
+                            onOpenChange={() => setEditItem2(null)}
+                          >
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Variant Item</DialogTitle>
+                              </DialogHeader>
+                              {editItem2 && (
+                                <div className="space-y-4">
+                                  <label>Variant Name</label>
+                                  <Input
+                                    value={editItem2.name}
+                                    onChange={(e) =>
+                                      setEditItem2({
+                                        ...editItem2,
+                                        name: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Name"
+                                  />
+                                  <div className="flex gap-2">
+                                    <label>Default Stock</label>
+                                  </div>
+                                  <Input
+                                    type="number"
+                                    value={editItem2.defaultStock}
+                                    onChange={(e) =>
+                                      setEditItem2({
+                                        ...editItem2,
+                                        defaultStock: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Default Stock"
+                                  />
+                                  <div className="flex gap-2">
+                                    <label>Price</label>
+                                  </div>
+                                  <Input
+                                    type="number"
+                                    value={editItem2.price.value}
+                                    onChange={(e) =>
+                                      setEditItem2({
+                                        ...editItem2,
+                                        price: {
+                                          ...editItem2.price,
+                                          value: Number(e.target.value),
+                                        },
+                                      })
+                                    }
+                                    placeholder="Price"
+                                  />
+                                  <Button onClick={handleUpdateVariant}>
+                                    Save
+                                  </Button>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() =>
+                              openDeleteDialog2(currentVariant._id)
+                            }
+                          >
+                            Delete
+                          </Button>
+
+                          <AlertDialog
+                            open={!!deleteId2}
+                            onOpenChange={() => setDeleteId2(null)}
+                          >
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete this menu item?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. Are you sure you
+                                  want to delete this item?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel
+                                  onClick={() => setDeleteId2(null)}
+                                >
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleDeleteVariant}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">No variants found.</p>
-                  )}
-                </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setCurrentIndex((prev) => prev + 1)}
+                        disabled={currentIndex === variants.length - 1}
+                      >
+                        <ChevronRight />
+                      </Button>
+                    </div>
+
+                    <p className="text-xs text-center text-muted-foreground">
+                      Variant {currentIndex + 1} of {variants.length}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No variants found.</p>
+                )}
               </DialogContent>
             </Dialog>
             {/* Create Variant Dialog */}
@@ -822,65 +1047,58 @@ const CafeteriaAdmin = () => {
                   <DialogTitle>Create Variant</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                <div className="space-y-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const files = e.target.files;
-                              if (!files) return;
+                  <div className="space-y-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files) return;
 
-                              const newFiles = Array.from(files);
-                              if (
-                                newVariant.images.length + newFiles.length >
-                                4
-                              ) {
-                                toast.error(
-                                  "You can only upload up to 4 images."
-                                );
-                                return;
-                              }
+                        const newFiles = Array.from(files);
+                        if (newVariant.images.length + newFiles.length > 4) {
+                          toast.error("You can only upload up to 4 images.");
+                          return;
+                        }
 
-                              setNewVariant({
-                                ...newVariant,
-                                images: [...newVariant.images, ...newFiles],
-                              });
-                            }}
-                            disabled={newVariant.images.length >= 4}
-                          />
+                        setNewVariant({
+                          ...newVariant,
+                          images: [...newVariant.images, ...newFiles],
+                        });
+                      }}
+                      disabled={newVariant.images.length >= 4}
+                    />
 
-                          {newVariant.images.length > 0 && (
-                            <div className="flex items-center gap-4">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => setImageIndex((i) => i - 1)}
-                                disabled={imageIndex === 0}
-                              >
-                                ←
-                              </Button>
+                    {newVariant.images.length > 0 && (
+                      <div className="flex items-center gap-4">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setImageIndex((i) => i - 1)}
+                          disabled={imageIndex === 0}
+                        >
+                          ←
+                        </Button>
 
-                              <img
-                                src={URL.createObjectURL(
-                                  newVariant.images[imageIndex]
-                                )}
-                                alt="Preview"
-                                className="w-32 h-32 object-cover rounded"
-                              />
-
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => setImageIndex((i) => i + 1)}
-                                disabled={
-                                  imageIndex === newVariant.images.length - 1
-                                }
-                              >
-                                →
-                              </Button>
-                            </div>
+                        <img
+                          src={URL.createObjectURL(
+                            newVariant.images[imageIndex]
                           )}
-                        </div>
+                          alt="Preview"
+                          className="w-32 h-32 object-cover rounded"
+                        />
+
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setImageIndex((i) => i + 1)}
+                          disabled={imageIndex === newVariant.images.length - 1}
+                        >
+                          →
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <Input
                     placeholder="Variant Name"
                     value={newVariant.name}
