@@ -46,9 +46,8 @@ const uploadImg = async(file) => {
 
 const getImgUrl = async(name) => {
     try {
-        if (!file) {
+        if (!name)
             return null;
-        }
         const params = {
             Bucket: process.env.BUCKET_NAME,
             Key: name

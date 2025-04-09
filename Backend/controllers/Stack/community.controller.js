@@ -57,7 +57,7 @@ const communityController = ({
         } catch (error) {
             return res.status(500).json({
                 message: error.message
-            })            
+            });
         }
     },
     deleteMember: async(req, res) => {

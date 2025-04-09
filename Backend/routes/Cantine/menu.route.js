@@ -437,6 +437,8 @@ router.post('/dailymenu', auth, menuController.createDailyMenu);
  *       500:
  *         description: Internal server error
  */
-router.get('/dailymenu', auth, menuController.getDailyMenu);
+router.get('/dailymenu/today', auth, menuController.getDailyMenu);
+
+router.get('/dailymenu/', auth, menuController.getDailyMenus);
 
 module.exports = router;

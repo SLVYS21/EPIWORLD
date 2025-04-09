@@ -62,9 +62,12 @@ router.post('/user/signup', upload.single('profile'), userController.signup);
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
  *     parameters:
  *       - in: query
- *         name: email
+history *         name: email
  *         required: true
  *         schema:
  *           type: string

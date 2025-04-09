@@ -7,80 +7,89 @@ const dailyMenuSchema = new mongoose.Schema({
         unique: true
     },
     plates: [{
-        menuId: {
+        menu: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Menu"
         },
-        variants: [{
-            variantId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Variant"
-            },
-            quantity: {
-                type: Number,
-                default: 0
-            },
-            price: {
-                value: {
-                    type: Number,
-                    default: 0
-                },
-                currency: {
-                    type: String,
-                    default: "XOF"
-                }
-            },
-            first: {
-                //In case of promotion for the the {first n} orders
-                type: Number,
-                default: 0
-            }, 
-            illimited: {
-                type: Boolean,
-                default: true
-            }    
-        }],
-        quantity: {
+        // variants: [{
+        //     variantId: {
+        //         type: mongoose.Schema.Types.ObjectId,
+        //         ref: "Variant"
+        //     },
+        //     quantity: {
+        //         type: Number,
+        //         default: 0
+        //     },
+        //     price: {
+        //         value: {
+        //             type: Number,
+        //             default: 0
+        //         },
+        //         currency: {
+        //             type: String,
+        //             default: "XOF"
+        //         }
+        //     },
+        //     first: {
+        //         //In case of promotion for the the {first n} orders
+        //         type: Number,
+        //         default: 0
+        //     }, 
+        //     illimited: {
+        //         type: Boolean,
+        //         default: true
+        //     }    
+        // }],
+        // quantity: {
+        //     type: Number,
+        //     default: 0
+        // },
+        // price: {
+        //     value: {
+        //         type: Number,
+        //         default: 0
+        //     },
+        //     currency: {
+        //         type: String,
+        //         default: "XOF"
+        //     }
+        // },
+        // illimited: {
+        //     type: Boolean,
+        //     default: true
+        // },
+        // minPrice: {
+        //     value: {
+        //         type: Number,
+        //         default: 0
+        //     },
+        //     currency: {
+        //         type: String,
+        //         default: "XOF"
+        //     }
+        // },
+        // maxPrice: {
+        //     value: {
+        //         type: Number,
+        //         default: 0
+        //     },
+        //     currency: {
+        //         type: String,
+        //         default: "XOF"
+        //     }
+        // },
+        promotion: {
             type: Number,
-            default: 0
+            default: 0,
+            max: 100
         },
-        price: {
-            value: {
-                type: Number,
-                default: 0
-            },
-            currency: {
-                type: String,
-                default: "XOF"
-            }
+        first: {
+            type: Number,
+            default: 0,
         },
-        illimited: {
+        finished: {
             type: Boolean,
-            default: true
-        },
-        minPrice: {
-            value: {
-                type: Number,
-                default: 0
-            },
-            currency: {
-                type: String,
-                default: "XOF"
-            }
-        },
-        maxPrice: {
-            value: {
-                type: Number,
-                default: 0
-            },
-            currency: {
-                type: String,
-                default: "XOF"
-            }
-        },
-        reduc: {
-            type: Number,
-            default: 0
+            default: false
         }
     }]
 });

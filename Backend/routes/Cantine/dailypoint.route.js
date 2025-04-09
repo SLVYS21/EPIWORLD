@@ -9,6 +9,7 @@ router.get('/dailypoint/menu/:menuId', auth, controller.getPointByMenu);
 
 router.get('/dailypoint/date/:date', auth, controller.getDailyPointForSpecificDate);
 
+
 /**
  * @swagger
  * /api/dailypoint:

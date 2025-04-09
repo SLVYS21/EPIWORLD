@@ -32,6 +32,44 @@ function getMinMax(variants)
     return {min, max};
 }
 
+const computeDifference = (created_at, now) => {
+    const diffMs = Math.abs(created_at - now);
+
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    return diffMinutes;
+}
+
+async function updateUrl(object, path)
+{
+    const now = new Date();
+    if (Array.isArray(object) || (path && object[path] && Array.isArray(object[path]))) {
+        const array = [];
+        const damn = Array.isArray(object) ? object : object[path];
+        for (image of object[path]) {
+            if (computeDifference(image.updated_at, now) >= 3550) {
+                const ret = await get(image);
+                if (!ret) {
+                    array.push(image);
+                    continue;
+                }
+                array.push({
+                    update_at: new Date(),
+                    name: image.name,
+                    url: ret.url
+                });
+            }
+        }
+        return array;
+    } else {
+        const ret = await get(object.name);
+        return {
+            name: object.name,
+            url: ret.url,
+            updated_at: new Date()
+        }
+    }
+}
+
 const menuController = ({
     createCategory: async(req, res) => {
         try {
@@ -152,11 +190,15 @@ const menuController = ({
             const menus = await Menu.find({
                 deleted: false
             }).sort({_id: -1}).limit(limit).skip((page - 1) * limit).populate("variants");
-            return res.status(200).json(menus);
+
+            const promises = await Promise.all(
+                menus.map(it => it.images = updateUrl(it.images))
+            );
+            return res.status(200).json(promises);
         } catch (error) {
             return res.status(500).json({
                 message: error.message
-            }); 
+            });
         }
     },
     createMenu: async(req, res) => {
@@ -502,17 +544,43 @@ const menuController = ({
     },
     createDailyMenu: async(req, res) => {
         try {
+            /*Menu: {
+            //menu
+            //promotion: Number
+            //first: Number
+            //finished: Boolean
+            } */
             const {date, plates} = req.body;
 
-            const exist =  await DailyMenu.findOne({date});
-            if (!exist)
+            const start = new Date(date);
+            const end = new Date(date);
+            end.setDate(end.getDate() + 1);
+
+            const exist = await DailyMenu.findOne({
+                date: {
+                    $gte: start,
+                    $lte: end
+                }
+            });
+            if (exist)
                 return res.status(404).json({
-                    message: "Daily menu already exists"
+                    message: "Menu Already exist"
                 });
+            const menus = [];
             for (const plate of plates) {
-                const menu = await Menu.findById(plate.menu);
+                const menu = await Menu.findById(plate);
+                if (!menu) {
+                    return res.status(404).json({
+                        message: "Menu not found"
+                    });
+                }
+                menus.push({
+                    menu: menu._id,
+                });
             }
-            
+            const dailymenu = await DailyMenu.create({
+                plates: menus,
+            });
 
             return res.status(200).json(dailymenu);
         } catch (error) {
@@ -523,10 +591,42 @@ const menuController = ({
     },
     getDailyMenu: async(req, res) => {
         try {
+            const today = new Date();
 
+            const start = new Date(today);
+            const end = new Date(today);
+            end.setDate(end.getDate() + 1);
+            const dailymenu = await DailyMenu.findOne({
+                date: {
+                    $gte: start,
+                    $lte: end
+                }
+            }).populate("plates.menu")
+            .populate('plates.menu.variants');
+            return res.status(200).json((dailymenu) ? dailymenu : {
+                message: "No Speciality Today"
+            });
         } catch(error) {
             return res.status(500).json({
-                messafe: error.message
+                message: error.message
+            })
+        }
+    },
+    getDailyMenus: async(req, res) => {
+        try {
+            const {startDate, endDate, page = 1, limit = 10} = req.query;
+
+            const dailymenus = await DailyMenu.find()
+            .sort({_id: -1})
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .populate('plates.menu')
+            .populate('plates.menu.variants')
+
+            return res.status(200).json(dailymenus);
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message
             })
         }
     }
