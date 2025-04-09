@@ -53,7 +53,7 @@ const getImgUrl = async(name) => {
             Key: name
         };
         const command = new DeleteObjectCommand(params);
-        const url = getSignedUrl(s3, command, {expiresIn: 3600});
+        const url = await getSignedUrl(s3, command, {expiresIn: 3600});
         return {
             url
         }

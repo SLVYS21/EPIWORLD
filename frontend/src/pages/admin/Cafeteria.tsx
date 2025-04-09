@@ -3,6 +3,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogTitle,
@@ -74,8 +75,12 @@ const CafeteriaAdmin = () => {
     name: "",
     description: "",
   });
+  const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [categories, setCategories] = useState<CantineCategory[]>([]);
+  const [dailyMenus, setDailyMenus] = useState<any[]>([]);
   const [menus, setMenus] = useState<MenuAdminItem[]>([]);
+  // const [menusCat, setMenusCat] = useState<MenuAdminItem[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
   const [editItem, setEditItem] = useState<MenuAdminItem | null>(null);
   const [editItem2, setEditItem2] = useState<any | null>(null);
@@ -100,6 +105,58 @@ const CafeteriaAdmin = () => {
   const variants = viewVariantItem?.variants || [];
   const currentVariant = variants[currentIndex];
 
+  // const fetchMenusByCat = useCallback(async () => {
+  //   const getCategoryIdByName = (name: string): string | undefined => {
+  //     const match = categories.find(
+  //       (category) => category.name.toLowerCase() === name.toLowerCase()
+  //     );
+  //     return match?._id;
+  //   };
+  
+  //   const dailyCategoryId = getCategoryIdByName("Dialy Meal");
+  //   console.log("Daily Category ID: ", dailyCategoryId);
+  //   try {
+  //     const response = await axios.get(`${backendUrl}/api/menubycategory`, {
+  //       params: {
+  //         categoryId: dailyCategoryId,
+  //       },
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     setMenusCat(response.data);
+  //     console.log("Menus Category: ", response.data);
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // }, [token]);
+
+  const toggleMealSelection = (mealId: string) => {
+    setSelectedMeals((prev) =>
+      prev.includes(mealId)
+        ? prev.filter((id) => id !== mealId)
+        : [...prev, mealId]
+    );
+  };
+
+  const handleDailySubmit = async () => {
+    try {
+      const payload = {
+        plates: selectedMeals,
+        date: selectedDate,
+      };
+
+      await axios.post(`${backendUrl}/api/dailymenu`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("Daily menu added successfully");
+      setSelectedMeals([]);
+      setSelectedDate("");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add daily menu");
+    }
+  };
+
   const handleCreateVariant = async () => {
     // Send newVariant with createVariantMenuId to backend
     console.log("Create variant", createVariantMenuId, newVariant);
@@ -122,6 +179,7 @@ const CafeteriaAdmin = () => {
       );
       toast.success("Variant created successfully");
       setCreateVariantMenuId(null);
+      fetchMenus();
     } catch (error) {
       console.error("Error creating variant:", error);
       toast.error("Error creating variant");
@@ -167,6 +225,7 @@ const CafeteriaAdmin = () => {
       });
       toast.success("Menu updated");
       setEditItem(null);
+      fetchMenus();
       // re-fetch or update menus
     } catch (err) {
       console.error(err);
@@ -187,6 +246,7 @@ const CafeteriaAdmin = () => {
       });
       toast.success("Menu updated");
       setEditItem(null);
+      fetchMenus();
       // re-fetch or update menus
     } catch (err) {
       console.error(err);
@@ -239,6 +299,7 @@ const CafeteriaAdmin = () => {
       });
       toast.success("Category added successfully");
       setCategoryData({ name: "", description: "" });
+      fetchCategories();
     } catch (err) {
       console.error(err);
       toast.error("Failed to add category");
@@ -259,7 +320,6 @@ const CafeteriaAdmin = () => {
       await axios.post(`${backendUrl}/api/menus`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          // "Content-Type": "multipart/form-data",
         },
       });
       toast.success("Menu item added successfully");
@@ -270,24 +330,25 @@ const CafeteriaAdmin = () => {
         category: "",
         images: [],
       });
+      fetchMenus();
     } catch (err) {
       console.error(err);
       toast.error("Failed to add menu item");
     }
   };
 
-  const handleDailySubmit = async () => {
-    try {
-      await axios.post(`${backendUrl}/api/daily`, dailyMenuData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Daily menu added successfully");
-      setDailyMenuData({ name: "", description: "" });
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to add daily menu");
-    }
-  };
+  // const handleDailySubmit = async () => {
+  //   try {
+  //     await axios.post(`${backendUrl}/api/daily`, dailyMenuData, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     toast.success("Daily menu added successfully");
+  //     setDailyMenuData({ name: "", description: "" });
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Failed to add daily menu");
+  //   }
+  // };
 
   const getButtonText = () => {
     switch (activeTab) {
@@ -326,10 +387,26 @@ const CafeteriaAdmin = () => {
     }
   }, [token]);
 
+  const fetchDialyMenus = useCallback(async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/dailymenu`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDailyMenus(response.data);
+      console.log("Daily Menus: ", response.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchCategories();
     fetchMenus();
-  }, [fetchCategories, fetchMenus]);
+    fetchDialyMenus();
+    // if (activeTab === "daily") {
+    //   fetchMenusByCat();
+    // }
+  }, [fetchCategories, fetchMenus, fetchDialyMenus/*, fetchMenusByCat, activeTab*/]);
 
   return (
     <AdminLayout>
@@ -493,7 +570,7 @@ const CafeteriaAdmin = () => {
                 )}
 
                 {/* Daily Menu Form */}
-                {activeTab === "daily" && (
+                {/* {activeTab === "daily" && (
                   <div className="space-y-4">
                     <Input
                       placeholder="Name"
@@ -515,6 +592,42 @@ const CafeteriaAdmin = () => {
                         })
                       }
                     />
+                    <Button onClick={handleDailySubmit}>Submit</Button>
+                  </div>
+                )} */}
+                {activeTab === "daily" && (
+                  <div className="space-y-4">
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                    />
+
+                    <div className="max-h-[300px] overflow-y-auto space-y-2 border p-2 rounded">
+                      {menus.map((meal) => (
+                        <div
+                          key={meal._id}
+                          className="flex items-center space-x-2 border rounded p-2"
+                        >
+                          <Checkbox
+                            checked={selectedMeals.includes(meal._id)}
+                            onCheckedChange={() =>
+                              toggleMealSelection(meal._id)
+                            }
+                          />
+                          <img
+                            src={
+                              meal.images?.[meal.mainpic]?.url ||
+                              "/placeholder.jpg"
+                            }
+                            alt={meal.name}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                          <span>{meal.name}</span>
+                        </div>
+                      ))}
+                    </div>
+
                     <Button onClick={handleDailySubmit}>Submit</Button>
                   </div>
                 )}
@@ -741,10 +854,12 @@ const CafeteriaAdmin = () => {
                             <Coffee className="h-8 w-8 text-muted-foreground" />
                           )}
                         </div>
-
                         <h3 className="font-medium">{item.name}</h3>
                         <p className="text-sm text-muted-foreground mt-1">
                           {item.description}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Item has {item.variants.length} variants
                         </p>
                         <div className="flex gap-2 mt-4">
                           <Button

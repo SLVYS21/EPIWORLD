@@ -43,17 +43,19 @@ async function updateUrl(object, path)
 {
     const now = new Date();
     if (Array.isArray(object) || (path && object[path] && Array.isArray(object[path]))) {
+        console.log(object)
         const array = [];
         const damn = Array.isArray(object) ? object : object[path];
-        for (image of object[path]) {
-            if (computeDifference(image.updated_at, now) >= 3550) {
-                const ret = await get(image);
+        for (image of damn) {
+            console.log(computeDifference(image.updated_at, now))
+            if (computeDifference(image.updated_at, now) >= 59) {
+                const ret = await get(image.name);
                 if (!ret) {
                     array.push(image);
                     continue;
                 }
                 array.push({
-                    update_at: new Date(),
+                    updated_at: new Date(),
                     name: image.name,
                     url: ret.url
                 });
@@ -61,8 +63,11 @@ async function updateUrl(object, path)
         }
         return array;
     } else {
+        if (computeDifference(object.updated_at, now) < 59)
+            return object;
         const ret = await get(object.name);
-        return {
+
+        return (!ret) ? object : {
             name: object.name,
             url: ret.url,
             updated_at: new Date()
@@ -165,6 +170,7 @@ const menuController = ({
     getMenuByCat: async(req, res) => {
         try {
             const {page = 1, limit = 15, categoryId} = req.query;
+            console.log(categoryId);
             if (!categoryId) {
                 return res.status(404).json({
                     message: "Set some catgeory"
@@ -192,7 +198,18 @@ const menuController = ({
             }).sort({_id: -1}).limit(limit).skip((page - 1) * limit).populate("variants");
 
             const promises = await Promise.all(
-                menus.map(it => it.images = updateUrl(it.images))
+                menus.map(async (it) => {
+                    it.images = await updateUrl(it.images);
+                    it.variants = await Promise.all(
+                        it.variants.map(async (variant) => {
+                            variant.images = await updateUrl(variant.images);
+                            await variant.save();
+                            return variant;
+                        }
+                    ));
+                    await it.save();
+                    return it;
+            })
             );
             return res.status(200).json(promises);
         } catch (error) {
@@ -358,7 +375,7 @@ const menuController = ({
     updateVariant: async(req, res) => {
         try {
             const variantId = req.params.id;
-            const {name, price, defaultStock, quant, mainpic} = req.body;
+            const {name, price, defaultStock, quant, mainpic, images} = req.body;
             const variant = await Variant.findById(variantId);
             if (!variant)
                 return res.status(404).json({
@@ -387,8 +404,29 @@ const menuController = ({
             }
             if (defaultStock)
                 variant.stock = variant.stock - variant.defaultStock + defaultStock;
-            if (images)
-                variant.images = images;
+            if (images) {
+                if (images.length > 4) {
+                    return res.status(404).json({
+                        message: "Limit of 4 images"
+                    });
+                }
+                const imgs = [];
+
+                for (const image of images) {
+                    const ret = await upload(image);
+                    if (ret) {
+                        imgs.push({
+                            name: ret.name,
+                            url: ret.url,
+                            updated_at: new Date()
+                        });
+                        continue;
+                    }
+                    return res.status(410).json({
+                        message: "Invalid Image"
+                    })
+                }
+            }
             if (mainpic)
                 variant.mainpic = mainpic;
 
@@ -415,7 +453,7 @@ const menuController = ({
     },
     updateMenu: async(req, res) => {
         try {
-            const {name, description, price, quant, defaultStock} = req.body;
+            const {name, description, price, quant, defaultStock, images} = req.body;
 
             const menu = await Menu.findById(req.params.id);
 
@@ -437,6 +475,29 @@ const menuController = ({
                         message: "Price can't be negative"
                     });
                 menu.price = price;
+            }
+            if (images) {
+                if (images.length > 4) {
+                    return res.status(404).json({
+                        message: "Limit of 4 images"
+                    });
+                }
+                const imgs = [];
+
+                for (const image of images) {
+                    const ret = await upload(image);
+                    if (ret) {
+                        imgs.push({
+                            name: ret.name,
+                            url: ret.url,
+                            updated_at: new Date()
+                        });
+                        continue;
+                    }
+                    return res.status(410).json({
+                        message: "Invalid Image"
+                    })
+                }
             }
             // if (mainpic)
             //     menu.mainpic = mainpic;

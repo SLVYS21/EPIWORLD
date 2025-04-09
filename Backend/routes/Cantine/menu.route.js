@@ -441,4 +441,6 @@ router.get('/dailymenu/today', auth, menuController.getDailyMenu);
 
 router.get('/dailymenu/', auth, menuController.getDailyMenus);
 
+router.get('/menubycategory', auth, menuController.getMenuByCat);
+
 module.exports = router;
