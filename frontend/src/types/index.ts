@@ -189,3 +189,41 @@ export interface MenuAdminItem {
   deleted: boolean;
   __v: number;
 }
+
+export interface TodaysMenu {
+  _id: string;
+  date: string;
+  plates: Plate[];
+  __v: number;
+}
+
+export interface Plate {
+  _id: string;
+  promotion: number;
+  first: number;
+  finished: boolean;
+  menu: Menu;
+}
+
+export interface Menu {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: CurrencyValue;
+  minPrice: CurrencyValue;
+  maxPrice: CurrencyValue;
+  variants: (string | null)[];
+  images: string[];
+  mainpic: number;
+  quant: boolean;
+  active: boolean;
+  stock: number;
+  deleted: boolean;
+  __v: number;
+}
+
+export interface CurrencyValue {
+  value: number;
+  currency: string;
+}

@@ -614,8 +614,10 @@ const menuController = ({
             const {date, plates} = req.body;
 
             const start = new Date(date);
+            end.setHours(0, 0, 0, 0);
             const end = new Date(date);
             end.setDate(end.getDate() + 1);
+            end.setHours(0, 0, 0, 0);
 
             const exist = await DailyMenu.findOne({
                 date: {
@@ -654,9 +656,12 @@ const menuController = ({
         try {
             const today = new Date();
 
-            const start = new Date(today);
+            const start = new Date(today)
+            start.setHours(0, 0, 0, 0);
             const end = new Date(today);
             end.setDate(end.getDate() + 1);
+            end.setHours(0, 0, 0, 0);
+            console.log(start, end);
             const dailymenu = await DailyMenu.findOne({
                 date: {
                     $gte: start,

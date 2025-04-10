@@ -39,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { CantineCategory, MenuAdminItem } from "@/types";
+import { CantineCategory, MenuAdminItem, TodaysMenu } from "@/types";
 import {
   Plus,
   Coffee,
@@ -80,7 +80,7 @@ const CafeteriaAdmin = () => {
   const [categories, setCategories] = useState<CantineCategory[]>([]);
   const [dailyMenus, setDailyMenus] = useState<any[]>([]);
   const [menus, setMenus] = useState<MenuAdminItem[]>([]);
-  // const [menusCat, setMenusCat] = useState<MenuAdminItem[]>([]);
+  const [todaysMenus, setTodaysMenus] = useState<TodaysMenu | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
   const [editItem, setEditItem] = useState<MenuAdminItem | null>(null);
   const [editItem2, setEditItem2] = useState<any | null>(null);
@@ -105,29 +105,17 @@ const CafeteriaAdmin = () => {
   const variants = viewVariantItem?.variants || [];
   const currentVariant = variants[currentIndex];
 
-  // const fetchMenusByCat = useCallback(async () => {
-  //   const getCategoryIdByName = (name: string): string | undefined => {
-  //     const match = categories.find(
-  //       (category) => category.name.toLowerCase() === name.toLowerCase()
-  //     );
-  //     return match?._id;
-  //   };
-  
-  //   const dailyCategoryId = getCategoryIdByName("Dialy Meal");
-  //   console.log("Daily Category ID: ", dailyCategoryId);
-  //   try {
-  //     const response = await axios.get(`${backendUrl}/api/menubycategory`, {
-  //       params: {
-  //         categoryId: dailyCategoryId,
-  //       },
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     setMenusCat(response.data);
-  //     console.log("Menus Category: ", response.data);
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // }, [token]);
+  const fetchTodaysMenus = useCallback(async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/dailymenu/today`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTodaysMenus(response.data);
+      console.log("Todays Menus: ", todaysMenus);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
 
   const toggleMealSelection = (mealId: string) => {
     setSelectedMeals((prev) =>
@@ -151,6 +139,7 @@ const CafeteriaAdmin = () => {
       toast.success("Daily menu added successfully");
       setSelectedMeals([]);
       setSelectedDate("");
+      fetchMenus();
     } catch (err) {
       console.error(err);
       toast.error("Failed to add daily menu");
@@ -337,19 +326,6 @@ const CafeteriaAdmin = () => {
     }
   };
 
-  // const handleDailySubmit = async () => {
-  //   try {
-  //     await axios.post(`${backendUrl}/api/daily`, dailyMenuData, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     toast.success("Daily menu added successfully");
-  //     setDailyMenuData({ name: "", description: "" });
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error("Failed to add daily menu");
-  //   }
-  // };
-
   const getButtonText = () => {
     switch (activeTab) {
       case "categories":
@@ -403,10 +379,8 @@ const CafeteriaAdmin = () => {
     fetchCategories();
     fetchMenus();
     fetchDialyMenus();
-    // if (activeTab === "daily") {
-    //   fetchMenusByCat();
-    // }
-  }, [fetchCategories, fetchMenus, fetchDialyMenus/*, fetchMenusByCat, activeTab*/]);
+    fetchTodaysMenus();
+  }, [fetchCategories, fetchMenus, fetchDialyMenus, fetchTodaysMenus]);
 
   return (
     <AdminLayout>
@@ -1254,7 +1228,7 @@ const CafeteriaAdmin = () => {
             </Dialog>
           </TabsContent>
 
-          <TabsContent value="daily" className="space-y-4 mt-6">
+          {/* <TabsContent value="daily" className="space-y-4 mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Today's Menu (April 6, 2025)</CardTitle>
@@ -1289,6 +1263,48 @@ const CafeteriaAdmin = () => {
                     </div>
                   </div>
                   <Button className="w-full">Update Daily Menu</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent> */}
+          <TabsContent value="daily" className="space-y-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Today's Menu (
+                  {new Date().toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  )
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {todaysMenus && todaysMenus.plates?.length > 0 ? (
+                    todaysMenus.plates.map((plate: any) => (
+                      <div
+                        key={plate._id}
+                        className="flex items-center justify-between border-b pb-2"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Coffee className="h-5 w-5 text-cafeteria" />
+                          <span>{plate.menu?.name || "Untitled Dish"}</span>
+                        </div>
+                        <div className="text-sm font-medium text-muted-foreground">
+                          {plate.menu?.price?.value}{" "}
+                          {plate.menu?.price?.currency}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-muted-foreground text-center">
+                      No items available for today's menu.
+                    </div>
+                  )}
+
+                  <Button className="w-full mt-4">Update Daily Menu</Button>
                 </div>
               </CardContent>
             </Card>

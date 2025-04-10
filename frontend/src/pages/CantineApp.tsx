@@ -1,18 +1,35 @@
-import React, { useState } from "react";
-import { MenuItem, CartItem } from "../types";
+import React, { useState, useCallback, useEffect } from "react";
+import { MenuItem, CartItem, TodaysMenu } from "../types";
 import { categories, menuItems } from "../data/menu";
 import Header from "../components/Header";
 import MenuSection from "../components/MenuSection";
 import Cart from "../components/Cart";
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
-import toast from 'react-hot-toast';
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import toast from "react-hot-toast";
+import axios from "axios";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const token = localStorage.getItem("token");
 
 function CantineApp() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [value, setValue] = React.useState(0);
+  const [todaysMenus, setTodaysMenus] = useState<TodaysMenu | null>(null);
+
+  const fetchTodaysMenus = useCallback(async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/dailymenu/today`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTodaysMenus(response.data);
+      console.log("Todays Menus: ", todaysMenus);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
 
   const handleChange = (_: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -50,6 +67,10 @@ function CantineApp() {
     setIsCartOpen(false);
   };
 
+  useEffect(() => {
+    fetchTodaysMenus();
+  }, [fetchTodaysMenus]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
@@ -65,34 +86,42 @@ function CantineApp() {
         />
 
         {/* Tabs for categories */}
-      <Box sx={{ bgcolor: 'background.paper', mt: 4, display: 'flex', justifyContent: 'center' }}>
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          aria-label="menu categories"
-          centered
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            mt: 4,
+            display: "flex",
+            justifyContent: "center",
+          }}
         >
-          {categories.map((category) => (
-            <Tab key={category.id} label={category.name} />
-          ))}
-        </Tabs>
-      </Box>
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="menu categories"
+            centered
+          >
+            {categories.map((category) => (
+              <Tab key={category.id} label={category.name} />
+            ))}
+          </Tabs>
+        </Box>
 
-      {/* Display items based on selected tab */}
-      {categories.map((category, index) => (
-        value === index && (
-          <MenuSection
-            key={category.id}
-            title={category.name}
-            items={menuItems.filter(
-              (item) => item.category === category.type && !item.isSpecial
-            )}
-            onAddToCart={addToCart}
-          />
-        )
-      ))}
+        {/* Display items based on selected tab */}
+        {categories.map(
+          (category, index) =>
+            value === index && (
+              <MenuSection
+                key={category.id}
+                title={category.name}
+                items={menuItems.filter(
+                  (item) => item.category === category.type && !item.isSpecial
+                )}
+                onAddToCart={addToCart}
+              />
+            )
+        )}
       </main>
 
       {isCartOpen && (
