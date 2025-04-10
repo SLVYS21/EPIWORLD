@@ -2,6 +2,8 @@ const Order = require('../../models/Cantine/menu.model');
 const Menu = require('../../models/Cantine/menu.model');
 const Category = require('../../models/Cantine/category.model');
 const User = require('../../models/user.model');
+const Variant = require('../../models/Cantine/variant.model');
+const mongoose = require('mongoose');
 
 function generateTrackingCode(keyword = "") {
     const timestamp = Date.now().toString(36);
@@ -13,6 +15,7 @@ function generateTrackingCode(keyword = "") {
 const orderController = ({
     create: async(req, res) => {
         try {
+            //
             const {items, placedBy, note, keyword, customerName} = req.body;
 
             if (placedBy) {
@@ -35,9 +38,9 @@ const orderController = ({
                     });
                 }
                 object.menuId = menu.menuId;
-                if (menu.variants && menu.variants[0]) {
-                    for (const variant of menu.variants) {
-                        const _v = await variant.findById(variant.variantId);
+                if (item.variants && item.variants[0]) {
+                    for (const variant of item.variants) {
+                        const _v = await Variant.findById(variant.variantId);
                         if (!_v)
                             return res.status(404).json({
                                 message: "Variant not found"

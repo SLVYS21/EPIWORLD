@@ -1,6 +1,10 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { MenuItem, CartItem, TodaysMenu } from "../types";
-import { categories, menuItems } from "../data/menu";
+import {
+  MenuItem,
+  CartItem,
+  MenuData,
+} from "../types";
+import { categories } from "../data/menu";
 import Header from "../components/Header";
 import MenuSection from "../components/MenuSection";
 import Cart from "../components/Cart";
@@ -17,19 +21,10 @@ function CantineApp() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [value, setValue] = React.useState(0);
-  const [todaysMenus, setTodaysMenus] = useState<TodaysMenu | null>(null);
-
-  const fetchTodaysMenus = useCallback(async () => {
-    try {
-      const response = await axios.get(`${backendUrl}/api/dailymenu/today`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTodaysMenus(response.data);
-      console.log("Todays Menus: ", todaysMenus);
-    } catch (err) {
-      console.error(err);
-    }
-  }, [token]);
+  const [menuData, setMenuData] = useState<MenuData>({
+    todaysMenu: null,
+    menus: [],
+  });
 
   const handleChange = (_: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -46,6 +41,8 @@ function CantineApp() {
       return [...prev, { ...item, quantity: 1 }];
     });
     toast.success("Item added to cart");
+    console.log("Item added to cart:", item);
+    console.log("Current cart items:", cartItems);
   };
 
   const updateQuantity = (itemId: string, change: number) => {
@@ -68,8 +65,26 @@ function CantineApp() {
   };
 
   useEffect(() => {
-    fetchTodaysMenus();
-  }, [fetchTodaysMenus]);
+    const fetchData = async () => {
+      const menusResponse = await axios.get(`${backendUrl}/api/menus`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const todaysMenuResponse = await axios.get(`${backendUrl}/api/dailymenu/today`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      setMenuData({
+        todaysMenu: todaysMenuResponse.data,
+        menus: menusResponse.data,
+      });
+      console.log("Today's Menu:", todaysMenuResponse.data);
+      console.log("Menus:", menusResponse.data);
+      console.log("Menus:", menuData);
+    };
+  
+    fetchData();
+  }, []);
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,12 +95,15 @@ function CantineApp() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
         <MenuSection
+          menuData={menuData}
+          onAddToCart={addToCart}
+        />
+        {/* <MenuSection
           title="Today's Specials"
           items={menuItems.filter((item) => item.isSpecial)}
           onAddToCart={addToCart}
         />
 
-        {/* Tabs for categories */}
         <Box
           sx={{
             bgcolor: "background.paper",
@@ -108,7 +126,7 @@ function CantineApp() {
           </Tabs>
         </Box>
 
-        {/* Display items based on selected tab */}
+      
         {categories.map(
           (category, index) =>
             value === index && (
@@ -121,7 +139,7 @@ function CantineApp() {
                 onAddToCart={addToCart}
               />
             )
-        )}
+        )} */}
       </main>
 
       {isCartOpen && (

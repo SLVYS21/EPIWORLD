@@ -74,7 +74,7 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  category: string;
+  // category: string;
   image: string;
   isSpecial?: boolean;
 }
@@ -226,4 +226,9 @@ export interface Menu {
 export interface CurrencyValue {
   value: number;
   currency: string;
+}
+
+export interface MenuData {
+  todaysMenu: TodaysMenu | null;
+  menus: MenuAdminItem[];
 }
