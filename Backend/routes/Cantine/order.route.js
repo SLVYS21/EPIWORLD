@@ -57,7 +57,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/orders', auth, orderController.create);
+router.post('/orders', orderController.create);
 
 /**
  * @swagger
