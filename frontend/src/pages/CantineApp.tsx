@@ -57,13 +57,68 @@ function CantineApp() {
     );
   };
 
-  const handleCheckout = () => {
-    //  handle payment processing
-    alert("Thank you for your order!");
-    setCartItems([]);
-    setIsCartOpen(false);
+  // const handleCheckout = () => {
+  //   //  handle payment processing
+  //   alert("Thank you for your order!");
+  //   setCartItems([]);
+  //   setIsCartOpen(false);
+  // };
+  const handleCheckout = async ({
+    note,
+    keyword,
+    customerName,
+    parameter = "menu", // default is "menu"
+  }: {
+    note?: string;
+    keyword?: string;
+    customerName?: string;
+    parameter?: "menu" | "variant";
+  } = {}) => {
+    const user = localStorage.getItem("user");
+    const placedBy = user ? JSON.parse(user)._id : null;
+    console.log("User ID:", placedBy);
+  
+    if (!placedBy) {
+      toast.error("User not logged in.");
+      return;
+    }
+  
+    const items = {
+      [parameter]: cartItems.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+      })),
+    };
+  
+    const orderPayload = {
+      items,        // <- now an object with either 'menu' or 'variant' key
+      placedBy,
+      note,
+      keyword,
+      customerName,
+    };
+  
+    try {
+      const response = await axios.post(`${backendUrl}/api/orders`, orderPayload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
+      toast.success("Order placed successfully!");
+      console.log("Order response:", response.data);
+  
+      setCartItems([]);
+      setIsCartOpen(false);
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Failed to place order. Please try again.");
+    }
   };
-
+  const handleCartClose = useCallback(() => {
+    setIsCartOpen(false);
+  }, []);  
   useEffect(() => {
     const fetchData = async () => {
       const menusResponse = await axios.get(`${backendUrl}/api/menus`, {

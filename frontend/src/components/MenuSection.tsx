@@ -1,6 +1,6 @@
-import React from 'react';
-import { MenuItem, MenuData  } from '../types';
-import { Plus } from 'lucide-react';
+import React from "react";
+import { MenuItem, MenuData } from "../types";
+import { Plus } from "lucide-react";
 
 interface MenuSectionProps {
   menuData: MenuData;
@@ -60,14 +60,14 @@ const MenuSection: React.FC<MenuSectionProps> = ({ menuData, onAddToCart }) => {
   const { todaysMenu, menus } = menuData;
 
   const specialItems: MenuItem[] =
-    todaysMenu?.plates.map((plate) => {
+    todaysMenu?.plates?.map((plate) => {
       const menu = plate.menu;
       return {
         id: menu._id,
         name: menu.name,
         description: menu.description,
         price: menu.price.value,
-        image: menu.images[menu.mainpic] || '',
+        image: menu.images[menu.mainpic] || "",
         isSpecial: true,
       };
     }) || [];
@@ -77,7 +77,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ menuData, onAddToCart }) => {
     name: item.name,
     description: item.description,
     price: item.price.value,
-    image: item.images[item.mainpic]?.url || '',
+    image: item.images[item.mainpic]?.url || "",
     isSpecial: false,
   }));
 
@@ -85,7 +85,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ menuData, onAddToCart }) => {
 
   return (
     <div className="py-8">
-      {specialItems.length > 0 && (
+      {specialItems.length > 0 ? (
         <>
           <h2 className="text-2xl font-semibold mb-6">Today's Specials</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
@@ -94,7 +94,12 @@ const MenuSection: React.FC<MenuSectionProps> = ({ menuData, onAddToCart }) => {
             ))}
           </div>
         </>
+      ) : (
+        <div className="text-center text-gray-500 text-lg mb-10">
+          No special menu available today.
+        </div>
       )}
+
       <h2 className="text-2xl font-semibold mb-6">Full Menu</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {regularItems.map((item) => (
