@@ -1,4 +1,4 @@
-const Order = require('../../models/Cantine/menu.model');
+const Order = require('../../models/Cantine/order.model');
 const Menu = require('../../models/Cantine/menu.model');
 const Category = require('../../models/Cantine/category.model');
 const User = require('../../models/user.model');
@@ -38,7 +38,7 @@ const orderController = ({
                     });
                 }
                 object.menuId = menu._id;
-                if (item.variants && item.variants[0]) {
+                if (item.variants && item.variants.length !== 0 && item.variants[0].variantId) {
                     for (const variant of item.variants) {
                         const _v = await Variant.findById(variant.variantId);
                         if (!_v)
@@ -63,16 +63,16 @@ const orderController = ({
                     }
                     object.price.currency = menu.currency;
                 } else {
-                    if (parseInt(menu.quantity) <= 0)
+                    if (parseInt(item.quantity) <= 0)
                         return res.status(404).json({
                             message: "Quantity can not be null or negative"
                         });
-                    object.quantity = menu.quantity;
+                    object.quantity = item.quantity;
                     object.price = {
-                        value: menu.price.value * menu.quantity,
+                        value: menu.price.value * item.quantity,
                         currency: menu.price.currency
                     }
-                    total += quantity;
+                    total += item.quantity;
                 }
                 list.push(object);
             }
