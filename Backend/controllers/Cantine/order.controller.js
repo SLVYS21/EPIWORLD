@@ -31,13 +31,13 @@ const orderController = ({
             const list = [];
             for (const item of items) {
                 const object = {};
-                const menu = await Menu.findById(item.menuId);
+                const menu = await Menu.findById(item.menu);
                 if (!menu) {
                     return res.status(404).json({
                         message: "Menu not found"
                     });
                 }
-                object.menuId = menu.menuId;
+                object.menuId = menu._id;
                 if (item.variants && item.variants[0]) {
                     for (const variant of item.variants) {
                         const _v = await Variant.findById(variant.variantId);
