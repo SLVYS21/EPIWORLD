@@ -58,6 +58,51 @@ import toast from "react-hot-toast";
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const token = localStorage.getItem("token");
 
+type Currency = "XOF";
+
+interface Price {
+  value: number;
+  currency: Currency;
+}
+
+interface MenuItem {
+  _id: string;
+  name: string;
+}
+
+interface OrderItem {
+  _id: string;
+  price: Price;
+  menuId: MenuItem;
+  quantity: number;
+  variants: any[]; // Adjust if you have variant structure
+}
+
+interface PlacedBy {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export type OrderStatus =
+  | "waiting"
+  | "confirmed"
+  | "cooking"
+  | "shipping"
+  | "delivered"
+  | "canceled";
+
+export interface Order {
+  _id: string;
+  trackingNumber: string;
+  totalPrice: Price;
+  placedBy: PlacedBy;
+  items: OrderItem[];
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const CafeteriaAdmin = () => {
   const [activeTab, setActiveTab] = useState("categories");
   const [categoryData, setCategoryData] = useState({
@@ -101,6 +146,8 @@ const CafeteriaAdmin = () => {
     // Reset index when opening a new item
     setCurrentIndex(0);
   }, [viewVariantItem]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
 
   const variants = viewVariantItem?.variants || [];
   const currentVariant = variants[currentIndex];
@@ -375,12 +422,31 @@ const CafeteriaAdmin = () => {
     }
   }, [token]);
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOrders(response.data);
+      console.log("Orders: ", response.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchCategories();
     fetchMenus();
     fetchDialyMenus();
     fetchTodaysMenus();
-  }, [fetchCategories, fetchMenus, fetchDialyMenus, fetchTodaysMenus]);
+    fetchOrders();
+  }, [
+    fetchCategories,
+    fetchMenus,
+    fetchDialyMenus,
+    fetchTodaysMenus,
+    fetchOrders,
+  ]);
 
   return (
     <AdminLayout>
@@ -1311,81 +1377,95 @@ const CafeteriaAdmin = () => {
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-4 mt-6">
+            <div className="flex gap-2 mb-4">
+              {[
+                "all",
+                "waiting",
+                "confirmed",
+                "cooking",
+                "shipping",
+                "delivered",
+                "canceled",
+              ].map((status) => (
+                <Button
+                  key={status}
+                  variant={statusFilter === status ? "default" : "outline"}
+                  onClick={() => setStatusFilter(status as OrderStatus | "all")}
+                >
+                  {status[0].toUpperCase() + status.slice(1)}
+                </Button>
+              ))}
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle>Recent Orders</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between border-b pb-4"
-                    >
-                      <div>
-                        <p className="font-medium">Order #{1000 + index}</p>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {
-                            [
-                              "Cheeseburger & Fries",
-                              "Veggie Wrap & Salad",
-                              "Pizza Combo",
-                              "Chicken Meal",
-                              "Daily Special",
-                            ][index]
-                          }
+                  {orders
+                    .filter(
+                      (order) =>
+                        statusFilter === "all" || order.status === statusFilter
+                    )
+                    .map((order) => (
+                      <div
+                        key={order._id}
+                        className="flex items-start justify-between border-b pb-4"
+                      >
+                        <div>
+                          <p className="font-medium">
+                            #{order.trackingNumber} - {order.placedBy.name}
+                          </p>
+                          <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                            {order.items.map((item) => (
+                              <div key={item._id}>
+                                {item.menuId.name} × {item.quantity}
+                              </div>
+                            ))}
+                            <div className="flex items-center gap-2 text-xs mt-2">
+                              <Clock className="h-3 w-3" />
+                              {new Date(order.createdAt).toLocaleString()}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock className="h-3 w-3" />
-                          <span className="text-xs">
-                            {
-                              [
-                                "2 minutes ago",
-                                "15 minutes ago",
-                                "32 minutes ago",
-                                "45 minutes ago",
-                                "1 hour ago",
-                              ][index]
-                            }
+
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
+                              order.status === "waiting"
+                                ? "bg-yellow-50 text-yellow-800"
+                                : order.status === "confirmed"
+                                ? "bg-blue-50 text-blue-800"
+                                : order.status === "cooking"
+                                ? "bg-orange-50 text-orange-800"
+                                : order.status === "shipping"
+                                ? "bg-purple-50 text-purple-800"
+                                : order.status === "delivered"
+                                ? "bg-green-50 text-green-800"
+                                : "bg-red-50 text-red-800"
+                            }`}
+                          >
+                            {order.status}
                           </span>
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                            >
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                            >
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {index < 2 ? (
-                          <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs text-yellow-800">
-                            <Clock className="mr-1 h-3 w-3" />
-                            Pending
-                          </span>
-                        ) : index < 4 ? (
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-800">
-                            <Coffee className="mr-1 h-3 w-3" />
-                            Preparing
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs text-green-800">
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            Ready
-                          </span>
-                        )}
-                        <div className="flex gap-1">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                          >
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                          >
-                            <XCircle className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </CardContent>
             </Card>
