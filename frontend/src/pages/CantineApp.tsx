@@ -3,6 +3,7 @@ import {
   MenuItem,
   CartItem,
   MenuData,
+  Variant,
 } from "../types";
 import { categories } from "../data/menu";
 import Header from "../components/Header";
@@ -30,21 +31,63 @@ function CantineApp() {
     setValue(newValue);
   };
 
+  // const addToCart = (item: MenuItem) => {
+  //   setCartItems((prev) => {
+  //     const existingItem = prev.find((i) => i.id === item.id);
+  //     if (existingItem) {
+  //       return prev.map((i) =>
+  //         i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+  //       );
+  //     }
+  //     return [...prev, { ...item, quantity: 1 }];
+  //   });
+  //   toast.success("Item added to cart");
+  //   console.log("Item added to cart:", item);
+  //   console.log("Current cart items:", cartItems);
+  // };
+
   const addToCart = (item: MenuItem) => {
     setCartItems((prev) => {
       const existingItem = prev.find((i) => i.id === item.id);
       if (existingItem) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id
+            ? {
+                ...i,
+                quantity: (i.quantity || 1) + 1,
+                variants: item.variants?.length
+                  ? mergeVariants(i.variants || [], item.variants)
+                  : i.variants,
+              }
+            : i
         );
       }
       return [...prev, { ...item, quantity: 1 }];
     });
+  
     toast.success("Item added to cart");
     console.log("Item added to cart:", item);
     console.log("Current cart items:", cartItems);
   };
+  
+  const mergeVariants = (existing: Variant[], incoming: Variant[]) => {
+    const variantMap = new Map<string, number>();
+  
+    for (const v of existing) {
+      variantMap.set(v.variantId, v.quantity);
+    }
+  
+    for (const v of incoming) {
+      variantMap.set(v.variantId, (variantMap.get(v.variantId) || 0) + v.quantity);
+    }
+  
+    return Array.from(variantMap.entries()).map(([variantId, quantity]) => ({
+      variantId,
+      quantity,
+    }));
+  };
 
+  
   const updateQuantity = (itemId: string, change: number) => {
     setCartItems((prev) =>
       prev
@@ -57,41 +100,86 @@ function CantineApp() {
     );
   };
 
-  // const handleCheckout = () => {
-  //   //  handle payment processing
-  //   alert("Thank you for your order!");
-  //   setCartItems([]);
-  //   setIsCartOpen(false);
+  // const handleCheckout = async ({
+  //   note,
+  //   keyword,
+  //   customerName,
+  //   parameter = "menu", // default is "menu"
+  // }: {
+  //   note?: string;
+  //   keyword?: string;
+  //   customerName?: string;
+  //   parameter?: "menu" | "variant";
+  // } = {}) => {
+  //   const user = localStorage.getItem("user");
+  //   const placedBy = user ? JSON.parse(user)._id : null;
+  //   console.log("User ID:", placedBy);
+  
+  //   if (!placedBy) {
+  //     toast.error("User not logged in.");
+  //     return;
+  //   }
+  
+  //   const items = {
+  //     [parameter]: cartItems.map((item) => ({
+  //       id: item.id,
+  //       quantity: item.quantity,
+  //     })),
+  //   };
+  
+  //   const orderPayload = {
+  //     items,        // <- now an object with either 'menu' or 'variant' key
+  //     placedBy,
+  //     note,
+  //     keyword,
+  //     customerName,
+  //   };
+  
+  //   try {
+  //     const response = await axios.post(`${backendUrl}/api/orders`, orderPayload, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+  
+  //     toast.success("Order placed successfully!");
+  //     console.log("Order response:", response.data);
+  
+  //     setCartItems([]);
+  //     setIsCartOpen(false);
+  //   } catch (error) {
+  //     console.error("Checkout error:", error);
+  //     toast.error("Failed to place order. Please try again.");
+  //   }
   // };
   const handleCheckout = async ({
     note,
     keyword,
     customerName,
-    parameter = "menu", // default is "menu"
   }: {
     note?: string;
     keyword?: string;
     customerName?: string;
-    parameter?: "menu" | "variant";
   } = {}) => {
     const user = localStorage.getItem("user");
     const placedBy = user ? JSON.parse(user)._id : null;
-    console.log("User ID:", placedBy);
   
     if (!placedBy) {
       toast.error("User not logged in.");
       return;
     }
   
-    const items = {
-      [parameter]: cartItems.map((item) => ({
-        id: item.id,
-        quantity: item.quantity,
-      })),
-    };
+    const items = cartItems.map((item) => ({
+      menu: item.id,
+      quantity: item.quantity || 1,
+      ...(item.variants && item.variants.length > 0
+        ? { variants: item.variants.map((v) => ({ variantId: v.variantId, quantity: v.quantity })) }
+        : {}),
+    }));
   
     const orderPayload = {
-      items,        // <- now an object with either 'menu' or 'variant' key
+      items,
       placedBy,
       note,
       keyword,
@@ -116,9 +204,11 @@ function CantineApp() {
       toast.error("Failed to place order. Please try again.");
     }
   };
+  
   const handleCartClose = useCallback(() => {
     setIsCartOpen(false);
-  }, []);  
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       const menusResponse = await axios.get(`${backendUrl}/api/menus`, {

@@ -1,3 +1,5 @@
+import { V } from "node_modules/framer-motion/dist/types.d-B50aGbjN";
+
 export interface User {
   id: string;
   name: string;
@@ -69,6 +71,11 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface Variant {
+  variantId: string;
+  quantity: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -77,6 +84,7 @@ export interface MenuItem {
   // category: string;
   image: string;
   isSpecial?: boolean;
+  variants: Variant[];
 }
 
 export type Category = {
@@ -181,7 +189,7 @@ export interface MenuAdminItem {
   minPrice: CurrencyValue;
   maxPrice: CurrencyValue;
   images: MenuImage[];
-  variants: any[]; // update this if you have a specific structure for variants
+  variants: Variant[]; // update this if you have a specific structure for variants
   mainpic: number;
   quant: boolean;
   active: boolean;

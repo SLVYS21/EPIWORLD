@@ -60,17 +60,27 @@ const MenuSection: React.FC<MenuSectionProps> = ({ menuData, onAddToCart }) => {
   const { todaysMenu, menus } = menuData;
 
   const specialItems: MenuItem[] =
-    todaysMenu?.plates?.map((plate) => {
-      const menu = plate.menu;
-      return {
-        id: menu._id,
-        name: menu.name,
-        description: menu.description,
-        price: menu.price.value,
-        image: menu.images[menu.mainpic] || "",
-        isSpecial: true,
-      };
-    }) || [];
+  todaysMenu?.plates?.map((plate) => {
+    const menu = plate.menu;
+
+    const variants = (menu.variants || []).map((variant: any) => ({
+      variantId: variant._id,
+      quantity: 0, // default quantity is 0 until user selects it
+      name: variant.name,
+      price: variant.price.value,
+    }));
+
+    return {
+      id: menu._id,
+      name: menu.name,
+      description: menu.description,
+      price: menu.price.value,
+      image: menu.images?.[menu.mainpic] || "",
+      isSpecial: true,
+      variants, // properly structured variants
+    };
+  }) || [];
+
 
   const regularItems: MenuItem[] = menus.map((item) => ({
     id: item._id,
@@ -79,6 +89,7 @@ const MenuSection: React.FC<MenuSectionProps> = ({ menuData, onAddToCart }) => {
     price: item.price.value,
     image: item.images[item.mainpic]?.url || "",
     isSpecial: false,
+    variants: item.variants || null,
   }));
 
   const allItems = [...specialItems, ...regularItems];
