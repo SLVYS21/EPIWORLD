@@ -1376,7 +1376,7 @@ const CafeteriaAdmin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="orders" className="space-y-4 mt-6">
+          {/* <TabsContent value="orders" className="space-y-4 mt-6">
             <div className="flex gap-2 mb-4">
               {[
                 "all",
@@ -1459,6 +1459,166 @@ const CafeteriaAdmin = () => {
                               size="icon"
                               variant="outline"
                               className="h-8 w-8"
+                            >
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent> */}
+          <TabsContent value="orders" className="space-y-4 mt-6">
+            <div className="flex gap-2 mb-4">
+              {[
+                "all",
+                "waiting",
+                "confirmed",
+                "cooking",
+                "shipping",
+                "delivered",
+                "canceled",
+              ].map((status) => (
+                <Button
+                  key={status}
+                  variant={statusFilter === status ? "default" : "outline"}
+                  onClick={() => setStatusFilter(status as OrderStatus | "all")}
+                >
+                  {status[0].toUpperCase() + status.slice(1)}
+                </Button>
+              ))}
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Orders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {orders
+                    .filter(
+                      (order) =>
+                        statusFilter === "all" || order.status === statusFilter
+                    )
+                    .map((order) => (
+                      <div
+                        key={order._id}
+                        className="flex items-start justify-between border-b pb-4"
+                      >
+                        <div>
+                          <p className="font-medium">
+                            #{order.trackingNumber} - {order.placedBy.name}
+                          </p>
+                          <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                            {order.items.map((item) => (
+                              <div key={item._id}>
+                                {item.menuId.name} × {item.quantity}
+                              </div>
+                            ))}
+                            <div className="flex items-center gap-2 text-xs mt-2">
+                              <Clock className="h-3 w-3" />
+                              {new Date(order.createdAt).toLocaleString()}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2 text-xs p-0 underline"
+                            onClick={() => {
+                              const newCustomerId = prompt(
+                                "Enter new customer ID"
+                              );
+                              if (newCustomerId) {
+                                fetch("/orders/change-customer", {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    orderId: order._id,
+                                    customerId: newCustomerId,
+                                  }),
+                                }).then(() => {
+                                  // Refresh logic
+                                });
+                              }
+                            }}
+                          >
+                            Change Customer
+                          </Button>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <select
+                            value={order.status}
+                            onChange={(e) => {
+                              const newStatus = e.target.value as OrderStatus;
+                              fetch("/orders/update-status", {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  orderId: order._id,
+                                  status: newStatus,
+                                }),
+                              }).then(() => {
+                                // Refresh logic
+                              });
+                            }}
+                            className="text-xs px-2 py-1 rounded border"
+                          >
+                            {[
+                              "waiting",
+                              "confirmed",
+                              "cooking",
+                              "shipping",
+                            ].map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                fetch("/orders/update-status", {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    orderId: order._id,
+                                    status: "delivered",
+                                  }),
+                                }).then(() => {
+                                  // Refresh logic
+                                });
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                fetch("/orders/update-status", {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    orderId: order._id,
+                                    status: "canceled",
+                                  }),
+                                }).then(() => {
+                                  // Refresh logic
+                                });
+                              }}
                             >
                               <XCircle className="h-4 w-4 text-red-500" />
                             </Button>
